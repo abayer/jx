@@ -47,6 +47,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.2.0
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/google/go-cmp v0.2.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
@@ -82,6 +83,8 @@ require (
 	github.com/knq/snaker v0.0.0-20180306023312-d9ad1e7f342a // indirect
 	github.com/kr/pty v1.1.2 // indirect
 	github.com/magiconair/properties v1.8.0
+	github.com/markbates/inflect v1.0.4 // indirect
+	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
