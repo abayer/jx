@@ -190,7 +190,6 @@ func (o *StepCollectOptions) Run() error {
 
 	// TODO this pipeline name construction needs moving to a shared lib, and other things refactoring to use it
 	pipeline := fmt.Sprintf("%s-%s-%s-%s", projectOrg, projectRepoName, projectBranchName, buildNo)
-	activities := client.JenkinsV1().PipelineActivities(ns)
 
 	if pipeline != "" && buildNo != "" {
 		name := kube.ToValidName(pipeline)
