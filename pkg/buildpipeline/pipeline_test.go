@@ -1049,7 +1049,7 @@ stages:
 				Paths:   []string{"name"},
 			}).ViaField("unstash").ViaField("options").ViaFieldIndex("stages", 0),
 		},
-        {
+		{
 			name: "blank stage name",
 			yaml: `apiVersion: v0.1
 agent:
@@ -1059,11 +1059,11 @@ stages:
     steps:
       - command: ls
 `,
-            expectedError: (&apis.FieldError{
-                Message: "Stage name must contain at least one ASCII letter",
-                Paths:   []string{"name"},
-            }).ViaFieldIndex("stages", 0),
-        },
+			expectedError: (&apis.FieldError{
+				Message: "Stage name must contain at least one ASCII letter",
+				Paths:   []string{"name"},
+			}).ViaFieldIndex("stages", 0),
+		},
 	}
 
 	for _, tt := range tests {
@@ -1088,67 +1088,67 @@ stages:
 
 func TestRfc1035LabelMangling(t *testing.T) {
 	tests := []struct {
-		name           string
-		input          string
+		name     string
+		input    string
 		expected string
 	}{
 		{
-			name: "unmodified",
-			input: "unmodified",
+			name:     "unmodified",
+			input:    "unmodified",
 			expected: "unmodified-suffix",
 		},
 		{
-			name: "spaces",
-			input: "A Simple Test.",
+			name:     "spaces",
+			input:    "A Simple Test.",
 			expected: "a-simple-test-suffix",
 		},
 		{
-			name: "no leading digits",
-			input: "0123456789no-leading-digits",
+			name:     "no leading digits",
+			input:    "0123456789no-leading-digits",
 			expected: "no-leading-digits-suffix",
 		},
 		{
-			name: "no leading hyphens",
-			input: "----no-leading-hyphens",
+			name:     "no leading hyphens",
+			input:    "----no-leading-hyphens",
 			expected: "no-leading-hyphens-suffix",
 		},
 		{
-			name: "no consecutive hyphens",
-			input: "no--consecutive- hyphens",
+			name:     "no consecutive hyphens",
+			input:    "no--consecutive- hyphens",
 			expected: "no-consecutive-hyphens-suffix",
 		},
 		{
-			name: "no trailing hyphens",
-			input: "no-trailing-hyphens----",
+			name:     "no trailing hyphens",
+			input:    "no-trailing-hyphens----",
 			expected: "no-trailing-hyphens-suffix",
 		},
 		{
-			name: "no symbols",
-			input: "&$^#@(*&$^-whoops",
+			name:     "no symbols",
+			input:    "&$^#@(*&$^-whoops",
 			expected: "whoops-suffix",
 		},
 		{
-			name: "no unprintable characters",
-			input: "a\n\t\x00b",
+			name:     "no unprintable characters",
+			input:    "a\n\t\x00b",
 			expected: "ab-suffix",
 		},
 		{
-			name: "no unicode",
-			input: "japan-日本",
+			name:     "no unicode",
+			input:    "japan-日本",
 			expected: "japan-suffix",
 		},
 		{
-			name: "no non-bmp characters",
-			input: "happy 😃",
+			name:     "no non-bmp characters",
+			input:    "happy 😃",
 			expected: "happy-suffix",
 		},
 		{
-			name: "truncated to 63",
+			name:     "truncated to 63",
 			input:    "a0123456789012345678901234567890123456789012345678901234567890123456789",
 			expected: "a0123456789012345678901234567890123456789012345678901234-suffix",
 		},
 		{
-			name: "truncated to 62",
+			name:     "truncated to 62",
 			input:    "a012345678901234567890123456789012345678901234567890123-567890123456789",
 			expected: "a012345678901234567890123456789012345678901234567890123-suffix",
 		},
