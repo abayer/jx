@@ -160,7 +160,7 @@ func (s *Stage) TaskName() string {
 // no more than 63 characters long:
 //     [a-z]([-a-z0-9]*[a-z0-9])?
 // cf. https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-// body is assumed to have at least one alphabetical ASCII character.
+// body is assumed to have at least one ASCII letter.
 // suffix is assumed to be alphanumeric and non-empty.
 func mangleToRfc1035Label(body string, suffix string) string {
 	const MAX_LABEL_LENGTH = 63
@@ -279,10 +279,18 @@ func validateAgent(a Agent) *apis.FieldError {
 	return nil
 }
 
-// TODO: Probably need to validate that the stage name is usable in task names.
+var containsAsciiLetter = regexp.MustCompile(`[a-zA-Z]`).MatchString
+
 func validateStage(s Stage, parentAgent Agent) *apis.FieldError {
 	if len(s.Steps) == 0 && len(s.Stages) == 0 && len(s.Parallel) == 0 {
 		return apis.ErrMissingOneOf("steps", "stages", "parallel")
+	}
+
+	if !containsAsciiLetter(s.Name) {
+		return &apis.FieldError{
+			Message: "Stage name must contain at least one ASCII letter",
+			Paths:   []string{"name"},
+		}
 	}
 
 	stageAgent := s.Agent
@@ -570,7 +578,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 					stepImage = step.Agent.Image
 				}
 				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
-					Name:    mangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.TaskName(), i), suffix),
+					Name:    mangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
 					Env:     env,
 					Image:   stepImage,
 					Command: []string{step.Command},
