@@ -162,7 +162,7 @@ func (s *Stage) TaskName() string {
 // cf. https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 // body is assumed to have at least one ASCII letter.
 // suffix is assumed to be alphanumeric and non-empty.
-func mangleToRfc1035Label(body string, suffix string) string {
+func MangleToRfc1035Label(body string, suffix string) string {
 	const MAX_LABEL_LENGTH = 63
 	MAX_BODY_LENGTH := MAX_LABEL_LENGTH - len(suffix) - 1 // Add an extra hyphen before the suffix
 
@@ -545,7 +545,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		t := &pipelinev1alpha1.Task{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
-				Name:      mangleToRfc1035Label(fmt.Sprintf("%s-build-%s-stage-%s", pipelineIdentifier, buildIdentifier, s.Name), suffix),
+				Name:      MangleToRfc1035Label(fmt.Sprintf("%s-build-%s-stage-%s", pipelineIdentifier, buildIdentifier, s.Name), suffix),
 			},
 		}
 		t.SetDefaults()
@@ -578,7 +578,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 					stepImage = step.Agent.Image
 				}
 				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
-					Name:    mangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
+					Name:    MangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
 					Env:     env,
 					Image:   stepImage,
 					Command: []string{step.Command},
