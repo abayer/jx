@@ -155,20 +155,16 @@ func (s *Stage) TaskName() string {
 	return strings.ToLower(strings.NewReplacer(" ", "-").Replace(s.Name))
 }
 
-// Task names need to be RFC 1035/1123 compliant DNS labels, so we mangle the
-// input to make it compliant. Results should match the following regex and be
+// Task/Step names need to be RFC 1035/1123 compliant DNS labels, so we mangle
+// them to make them compliant. Results should match the following regex and be
 // no more than 63 characters long:
 //     [a-z]([-a-z0-9]*[a-z0-9])?
 // cf. https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-// Suffix is assumed to be alphanumeric and non-empty.
-func createTaskName(pipelineIdentifier string, stageName string, buildIdentifier string, suffix string) string {
+// body is assumed to have at least one alphabetical ASCII character.
+// suffix is assumed to be alphanumeric and non-empty.
+func mangleToRfc1035Label(body string, suffix string) string {
 	const MAX_LABEL_LENGTH = 63
 	MAX_BODY_LENGTH := MAX_LABEL_LENGTH - len(suffix) - 1 // Add an extra hyphen before the suffix
-
-	// Having `stage` and `build` literally in the output means the body is
-	// guaranteed to be non-empty. Would it be better to fail if the output is
-	// `stage-build-$suffix` because everything else is invalid?
-	body := fmt.Sprintf("%s-stage-%s-build-%s", pipelineIdentifier, stageName, buildIdentifier)
 
 	var sb strings.Builder
 	bufferedHyphen := false // Used to make sure we don't output consecutive hyphens.
@@ -541,7 +537,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		t := &pipelinev1alpha1.Task{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
-				Name:      createTaskName(pipelineIdentifier, s.Name, buildIdentifier, suffix),
+				Name:      mangleToRfc1035Label(fmt.Sprintf("%s-stage-%s-build-%s", pipelineIdentifier, s.Name, buildIdentifier), suffix),
 			},
 		}
 		t.SetDefaults()
@@ -574,8 +570,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 					stepImage = step.Agent.Image
 				}
 				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
-					// TODO: Step names don't appear to be validated in Build Pipeline _currently_, but should they be?
-					Name:    fmt.Sprintf("stage-%s-step-%d", s.TaskName(), i),
+					Name:    mangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.TaskName(), i), suffix),
 					Env:     env,
 					Image:   stepImage,
 					Command: []string{step.Command},
