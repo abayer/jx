@@ -537,7 +537,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		t := &pipelinev1alpha1.Task{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
-				Name:      mangleToRfc1035Label(fmt.Sprintf("%s-stage-%s-build-%s", pipelineIdentifier, s.Name, buildIdentifier), suffix),
+				Name:      mangleToRfc1035Label(fmt.Sprintf("%s-build-%s-stage-%s", pipelineIdentifier, buildIdentifier, s.Name), suffix),
 			},
 		}
 		t.SetDefaults()
