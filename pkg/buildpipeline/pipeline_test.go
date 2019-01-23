@@ -1088,43 +1088,78 @@ stages:
 
 func TestRfc1035LabelMangling(t *testing.T) {
 	tests := []struct {
+		name           string
 		input          string
-		expectedOutput string
+		expected string
 	}{
 		{
+			name: "unmodified",
 			input: "unmodified",
-			expectedOutput: "unmodified-suffix",
+			expected: "unmodified-suffix",
 		},
 		{
+			name: "spaces",
 			input: "A Simple Test.",
-			expectedOutput: "a-simple-test-suffix",
+			expected: "a-simple-test-suffix",
 		},
 		{
-			input: "0123456789no-starting-digits",
-			expectedOutput: "no-starting-digits-suffix",
+			name: "no leading digits",
+			input: "0123456789no-leading-digits",
+			expected: "no-leading-digits-suffix",
 		},
 		{
-			input: "----no-starting-hyphens",
-			expectedOutput: "no-starting-hyphens-suffix",
+			name: "no leading hyphens",
+			input: "----no-leading-hyphens",
+			expected: "no-leading-hyphens-suffix",
 		},
 		{
+			name: "no consecutive hyphens",
 			input: "no--consecutive- hyphens",
-			expectedOutput: "no-consecutive-hyphens-suffix",
+			expected: "no-consecutive-hyphens-suffix",
 		},
 		{
+			name: "no trailing hyphens",
 			input: "no-trailing-hyphens----",
-			expectedOutput: "no-trailing-hyphens-suffix",
+			expected: "no-trailing-hyphens-suffix",
 		},
 		{
-			input: "a0123456789012345678901234567890123456789012345678901234567890123456789",
-			expectedOutput: "a0123456789012345678901234567890123456789012345678901234-suffix",
+			name: "no symbols",
+			input: "&$^#@(*&$^-whoops",
+			expected: "whoops-suffix",
+		},
+		{
+			name: "no unprintable characters",
+			input: "a\n\t\x00b",
+			expected: "ab-suffix",
+		},
+		{
+			name: "no unicode",
+			input: "japan-日本",
+			expected: "japan-suffix",
+		},
+		{
+			name: "no non-bmp characters",
+			input: "happy 😃",
+			expected: "happy-suffix",
+		},
+		{
+			name: "truncated to 63",
+			input:    "a0123456789012345678901234567890123456789012345678901234567890123456789",
+			expected: "a0123456789012345678901234567890123456789012345678901234-suffix",
+		},
+		{
+			name: "truncated to 62",
+			input:    "a012345678901234567890123456789012345678901234567890123-567890123456789",
+			expected: "a012345678901234567890123456789012345678901234567890123-suffix",
 		},
 	}
 
 	for _, tt := range tests {
-		mangled := MangleToRfc1035Label(tt.input, "suffix")
-		if d := cmp.Diff(tt.expectedOutput, mangled); d != "" {
-			t.Fatalf("Mangled output did not match expected output: %s", d)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			mangled := MangleToRfc1035Label(tt.input, "suffix")
+			if d := cmp.Diff(tt.expected, mangled); d != "" {
+				t.Fatalf("Mangled output did not match expected output: %s", d)
+			}
+		})
 	}
 }
