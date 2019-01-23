@@ -1085,3 +1085,46 @@ stages:
 		})
 	}
 }
+
+func TestRfc1035LabelMangling(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedOutput string
+	}{
+		{
+			input: "unmodified",
+			expectedOutput: "unmodified-suffix",
+		},
+		{
+			input: "A Simple Test.",
+			expectedOutput: "a-simple-test-suffix",
+		},
+		{
+			input: "0123456789no-starting-digits",
+			expectedOutput: "no-starting-digits-suffix",
+		},
+		{
+			input: "----no-starting-hyphens",
+			expectedOutput: "no-starting-hyphens-suffix",
+		},
+		{
+			input: "no--consecutive- hyphens",
+			expectedOutput: "no-consecutive-hyphens-suffix",
+		},
+		{
+			input: "no-trailing-hyphens----",
+			expectedOutput: "no-trailing-hyphens-suffix",
+		},
+		{
+			input: "a0123456789012345678901234567890123456789012345678901234567890123456789",
+			expectedOutput: "a0123456789012345678901234567890123456789012345678901234-suffix",
+		},
+	}
+
+	for _, tt := range tests {
+		mangled := MangleToRfc1035Label(tt.input, "suffix")
+		if d := cmp.Diff(tt.expectedOutput, mangled); d != "" {
+			t.Fatalf("Mangled output did not match expected output: %s", d)
+		}
+	}
+}
