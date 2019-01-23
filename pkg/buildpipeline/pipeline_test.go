@@ -521,7 +521,7 @@ stages:
 agent:
   image: some-image
 stages:
-  - name: . --- .
+  - name: . -a- .
     steps:
       - command: ls
   - name: Wööh!!!! - This is cool.
@@ -535,7 +535,7 @@ stages:
 				},
 				Stages: []Stage{
 					{
-						Name: ". --- .",
+						Name: ". -a- .",
 						Steps: []Step{{
 							Command:   "ls",
 							Arguments: nil,
@@ -551,15 +551,15 @@ stages:
 				},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask(".-----.", "somepipeline-build-somebuild-stage-abcd"),
+				tb.PipelineTask(".--a--.", "somepipeline-build-somebuild-stage-a-abcd"),
 				tb.PipelineTask("wööh!!!!---this-is-cool.", "somepipeline-build-somebuild-stage-wh-this-is-cool-abcd",
-					tb.PipelineTaskResourceDependency("workspace", tb.ProvidedBy("somepipeline-build-somebuild-stage-abcd"))))),
+					tb.PipelineTaskResourceDependency("workspace", tb.ProvidedBy("somepipeline-build-somebuild-stage-a-abcd"))))),
 			tasks: []*pipelinev1alpha1.Task{
-				tb.Task("somepipeline-build-somebuild-stage-abcd", "somenamespace", tb.TaskSpec(
+				tb.Task("somepipeline-build-somebuild-stage-a-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
 						tb.ResourceTargetPath("workspace"))),
 					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
-					tb.Step("stage-step-0-abcd", "some-image", tb.Command("ls")),
+					tb.Step("stage-a-step-0-abcd", "some-image", tb.Command("ls")),
 				)),
 				tb.Task("somepipeline-build-somebuild-stage-wh-this-is-cool-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
@@ -1049,6 +1049,21 @@ stages:
 				Paths:   []string{"name"},
 			}).ViaField("unstash").ViaField("options").ViaFieldIndex("stages", 0),
 		},
+        {
+			name: "blank stage name",
+			yaml: `apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: .-  ^ ö
+    steps:
+      - command: ls
+`,
+            expectedError: (&apis.FieldError{
+                Message: "Stage name must contain at least one ASCII letter",
+                Paths:   []string{"name"},
+            }).ViaFieldIndex("stages", 0),
+        },
 	}
 
 	for _, tt := range tests {
