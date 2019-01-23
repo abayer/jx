@@ -264,9 +264,9 @@ stages:
 				}},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-stage-with-environment", "somepipeline-stage-a-stage-with-environment-build-somebuild-abcd"))),
+				tb.PipelineTask("a-stage-with-environment", "somepipeline-stage-a-stage-with-environment-build-somebuil-abcd"))),
 			tasks: []*pipelinev1alpha1.Task{
-				tb.Task("somepipeline-stage-a-stage-with-environment-build-somebuild-abcd", "somenamespace", tb.TaskSpec(
+				tb.Task("somepipeline-stage-a-stage-with-environment-build-somebuil-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
 						tb.ResourceTargetPath("workspace"))),
 					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
@@ -512,6 +512,59 @@ stages:
 					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
 					tb.Step("stage-a-working-stage-step-0", "some-other-image", tb.Command("echo"), tb.Args("hello", "world")),
 					tb.Step("stage-a-working-stage-step-1", "some-image", tb.Command("echo"), tb.Args("goodbye")),
+				)),
+			},
+		},
+		{
+			name: "mangled task names",
+			yaml: `apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: . --- .
+    steps:
+      - command: ls
+  - name: Wööh!!!! - This is cool.
+    steps:
+      - command: ls
+`,
+			expected: &Jenkinsfile{
+				APIVersion: "v0.1",
+				Agent: Agent{
+					Image: "some-image",
+				},
+				Stages: []Stage{
+					{
+						Name: ". --- .",
+						Steps: []Step{{
+							Command:   "ls",
+							Arguments: nil,
+						}},
+					},
+					{
+						Name: "Wööh!!!! - This is cool.",
+						Steps: []Step{{
+							Command:   "ls",
+							Arguments: nil,
+						}},
+					},
+				},
+			},
+			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
+				tb.PipelineTask(".-----.", "somepipeline-stage-build-somebuild-abcd"),
+				tb.PipelineTask("wööh!!!!---this-is-cool.", "somepipeline-stage-wh-this-is-cool-build-somebuild-abcd",
+					tb.PipelineTaskResourceDependency("workspace", tb.ProvidedBy("somepipeline-stage-build-somebuild-abcd"))))),
+			tasks: []*pipelinev1alpha1.Task{
+				tb.Task("somepipeline-stage-build-somebuild-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+						tb.ResourceTargetPath("workspace"))),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-.-----.-step-0", "some-image", tb.Command("ls")),
+				)),
+				tb.Task("somepipeline-stage-wh-this-is-cool-build-somebuild-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-wööh!!!!---this-is-cool.-step-0", "some-image", tb.Command("ls")),
 				)),
 			},
 		},
