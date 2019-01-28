@@ -642,6 +642,12 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 			Namespace: namespace,
 			Name:      fmt.Sprintf("%s-build-%s-%s", pipelineIdentifier, buildIdentifier, suffix),
 		},
+		Spec: pipelinev1alpha1.PipelineSpec{
+			Resources: []pipelinev1alpha1.PipelineDeclaredResource{{
+				Name: "common-workspace",
+				Type: pipelinev1alpha1.PipelineResourceTypeGit,
+			}},
+		},
 	}
 
 	p.SetDefaults()
@@ -673,10 +679,14 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 			}
 
 			if prevTask != "" {
-				pTask.ResourceDependencies = []pipelinev1alpha1.ResourceDependency{{
-					Name:       "workspace",
-					ProvidedBy: []string{prevTask},
-				}}
+				// TODO:
+				pTask.Resources = &pipelinev1alpha1.PipelineTaskResources{
+					Inputs: []pipelinev1alpha1.PipelineTaskInputResource{{
+						Name:     "workspace",
+						Resource: "common-workspace",
+						From:     []string{prevTask},
+					}},
+				}
 			}
 
 			p.Spec.Tasks = append(p.Spec.Tasks, pTask)
