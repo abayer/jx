@@ -134,6 +134,9 @@ docker-test-slow-integration:
 test1:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) test ./... -test.v -run $(TEST)
 
+test-pipeline:
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) test ./... -test.v -run "(ParseJenkinsfileYaml|FailedValidation|Rfc1035LabelMangling)"
+
 testbin:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) test -c github.com/jenkins-x/jx/pkg/jx/cmd -o build/jx-test
 
