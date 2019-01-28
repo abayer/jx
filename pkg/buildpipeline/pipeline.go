@@ -90,8 +90,9 @@ type Unstash struct {
 type StageOptions struct {
 	RootOptions `yaml:",inline"`
 
-	Stash   Stash   `yaml:"stash,omitempty"`
-	Unstash Unstash `yaml:"unstash,omitempty"`
+	Stash     Stash   `yaml:"stash,omitempty"`
+	Unstash   Unstash `yaml:"unstash,omitempty"`
+	Workspace *string `yaml:workspace,omitempty`
 }
 
 type Step struct {
@@ -409,6 +410,12 @@ func validateStageOptions(o StageOptions) *apis.FieldError {
 		}
 	}
 
+	if o.Workspace != nil {
+		if err := validateWorkspace(*o.Workspace); err != nil {
+			return err
+		}
+	}
+
 	return validateRootOptions(o.RootOptions)
 }
 
@@ -473,6 +480,17 @@ func validateStash(s Stash) *apis.FieldError {
 	return nil
 }
 
+func validateWorkspace(w string) *apis.FieldError {
+	if w == "" {
+		return &apis.FieldError{
+			Message: "The workspace name must be unspecified or non-empty",
+			Paths:   []string{"workspace"},
+		}
+	}
+
+	return nil
+}
+
 var randReader = rand.Reader
 
 func scopedEnv(s Stage, parentEnv []corev1.EnvVar) []corev1.EnvVar {
@@ -511,17 +529,54 @@ func (j *Jenkinsfile) toStepEnvVars() []corev1.EnvVar {
 	return env
 }
 
-type TaskAndName struct {
-	Task *pipelinev1alpha1.Task
-	Name string
+type TransformedStage struct {
+	Stage Stage
+	// Only one of Sequential, Parallel, and Task is non-empty
+	// TODO: Most blocks for Sequential/Parallel handling are identical. Maybe
+	// just use a single `Nested []TransformedStage` field and have a `Type string`
+	// field or similar to distinguish between sequential/parallel.
+	Sequential []TransformedStage
+	Parallel   []TransformedStage
+	Task       *pipelinev1alpha1.Task
+	// PipelineTask is non-empty only if Task is non-empty, but it is populated
+	// after Task is populated so the reverse is not true.
+	PipelineTask *pipelinev1alpha1.PipelineTask
 }
 
-func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, suffix string) ([]TaskAndName, error) {
-	if len(s.Post) != 0 {
-		return []TaskAndName{}, errors.New("post on stages not yet supported")
+func (ts TransformedStage) getLinearTasks() []*pipelinev1alpha1.Task {
+	if len(ts.Sequential) > 0 {
+		var tasks []*pipelinev1alpha1.Task
+		for _, seqTs := range ts.Sequential {
+			tasks = append(tasks, seqTs.getLinearTasks()...)
+		}
+		return tasks
+	} else if len(ts.Parallel) > 0 {
+		var tasks []*pipelinev1alpha1.Task
+		for _, parTs := range ts.Parallel {
+			tasks = append(tasks, parTs.getLinearTasks()...)
+		}
+		return tasks
+	} else {
+		return []*pipelinev1alpha1.Task{ts.Task}
 	}
+}
+
+func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, suffix string) (*TransformedStage, error) {
+	if len(s.Post) != 0 {
+		return nil, errors.New("post on stages not yet supported")
+	}
+
 	if !equality.Semantic.DeepEqual(s.Options, StageOptions{}) {
-		return []TaskAndName{}, errors.New("options on stage not yet supported")
+		o := s.Options
+		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
+			return nil, errors.New("Timeout on stage not yet supported")
+		} else if !equality.Semantic.DeepEqual(o.Retry, 0) {
+			return nil, errors.New("Retry on stage not yet supported")
+		} else if !equality.Semantic.DeepEqual(o.Stash, Stash{}) {
+			return nil, errors.New("Stash on stage not yet supported")
+		} else if !equality.Semantic.DeepEqual(o.Unstash, Unstash{}) {
+			return nil, errors.New("Unstash on stage not yet supported")
+		}
 	}
 
 	env := scopedEnv(s, parentEnv)
@@ -585,36 +640,47 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 					Args:    step.Arguments,
 				})
 			} else {
-				return []TaskAndName{}, errors.New("syntactic sugar steps not yet supported")
+				return nil, errors.New("syntactic sugar steps not yet supported")
 			}
 		}
 
-		// What name should we return here? The name in the CRD, the original, or actually s.TaskName()?
-		return []TaskAndName{{Task: t, Name: s.TaskName()}}, nil
+		return &TransformedStage{Stage: s, Task: t}, nil
 	}
 
 	if len(s.Stages) > 0 {
-		var tasks []TaskAndName
+		var tasks []TransformedStage
 
 		for i, nested := range s.Stages {
 			nestedWsPath := ""
 			if wsPath != "" && i == 0 {
 				nestedWsPath = wsPath
 			}
-			nestedTasks, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix)
-
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix)
 			if err != nil {
 				return nil, err
 			}
-
-			tasks = append(tasks, nestedTasks...)
+			tasks = append(tasks, *nestedTask)
 		}
 
-		return tasks, nil
+		return &TransformedStage{Stage: s, Sequential: tasks}, nil
 	}
 
 	if len(s.Parallel) > 0 {
-		return nil, errors.New("parallel stages not yet implemented for CRD translation")
+		var tasks []TransformedStage
+
+		for i, nested := range s.Parallel {
+			nestedWsPath := ""
+			if wsPath != "" && i == 0 {
+				nestedWsPath = wsPath
+			}
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix)
+			if err != nil {
+				return nil, err
+			}
+			tasks = append(tasks, *nestedTask)
+		}
+
+		return &TransformedStage{Stage: s, Parallel: tasks}, nil
 	}
 
 	return nil, errors.New("no steps, sequential stages, or parallel stages")
@@ -652,48 +718,106 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 
 	p.SetDefaults()
 
+	var blocks []TransformedStage
 	var tasks []*pipelinev1alpha1.Task
-
-	prevTask := ""
 
 	baseEnv := j.toStepEnvVars()
 
 	for _, s := range j.Stages {
 		wsPath := ""
-		if prevTask == "" {
+		if len(tasks) == 0 {
 			wsPath = "workspace"
 		}
-		childTasks, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, suffix)
+		block, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, suffix)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		for _, tn := range childTasks {
-			tasks = append(tasks, tn.Task)
-
-			pTask := pipelinev1alpha1.PipelineTask{
-				Name: tn.Name,
-				TaskRef: pipelinev1alpha1.TaskRef{
-					Name: tn.Task.Name,
-				},
-			}
-
-			if prevTask != "" {
-				// TODO:
-				pTask.Resources = &pipelinev1alpha1.PipelineTaskResources{
-					Inputs: []pipelinev1alpha1.PipelineTaskInputResource{{
-						Name:     "workspace",
-						Resource: "common-workspace",
-						From:     []string{prevTask},
-					}},
-				}
-			}
-
-			p.Spec.Tasks = append(p.Spec.Tasks, pTask)
-
-			prevTask = tn.Task.Name
-		}
+		tasks = append(tasks, block.getLinearTasks()...)
+		p.Spec.Tasks = append(p.Spec.Tasks, createPipelineTasks(block, blocks, &blocks)...)
 	}
 
 	return p, tasks, nil
+}
+
+// Yikes this is a nasty method, would be nice to not need `head`, but without it idk how to handle nested blocks. Needs thought
+// block: The current block
+// blocks: The graph up to but not including the current block (the parent block will be present but will only have preceding stages)
+// head: where to append the current block
+func createPipelineTasks(block *TransformedStage, blocks []TransformedStage, head *[]TransformedStage) []pipelinev1alpha1.PipelineTask {
+	if len(block.Sequential) > 0 {
+		var pTasks []pipelinev1alpha1.PipelineTask
+		tempBlock := TransformedStage{Stage: block.Stage, Sequential: []TransformedStage{}}
+		for _, seqBlock := range block.Sequential {
+			pTasks = append(pTasks, createPipelineTasks(&seqBlock, append(blocks, tempBlock), &tempBlock.Sequential)...)
+		}
+		*head = append(*head, tempBlock)
+		return pTasks
+	} else if len(block.Parallel) > 0 {
+		var pTasks []pipelinev1alpha1.PipelineTask
+		tempBlock := TransformedStage{Stage: block.Stage, Parallel: []TransformedStage{}}
+		for _, parBlock := range block.Parallel {
+			pTasks = append(pTasks, createPipelineTasks(&parBlock, append(blocks, tempBlock), &tempBlock.Parallel)...)
+		}
+		// Parallel stages cannot reference tasks defined in their same parallel block.
+		*head = append(*head, tempBlock)
+		return pTasks
+	} else {
+		pTask := pipelinev1alpha1.PipelineTask{
+			Name: block.Stage.TaskName(), // TODO: What should this actually be named?
+			TaskRef: pipelinev1alpha1.TaskRef{
+				Name: block.Task.Name,
+			},
+		}
+
+		if block.Stage.Options.Workspace == nil {
+			val := "default"
+			block.Stage.Options.Workspace = &val
+		}
+
+		_, provider := findWorkspaceProvider(*block, blocks)
+		pTask.Resources = &pipelinev1alpha1.PipelineTaskResources{
+			Inputs: []pipelinev1alpha1.PipelineTaskInputResource{{
+				Name:     "workspace",
+				Resource: "common-workspace",
+				From:     provider,
+			}},
+		}
+
+		block.PipelineTask = &pTask
+		*head = append(*head, *block)
+
+		return []pipelinev1alpha1.PipelineTask{pTask}
+	}
+}
+
+// Looks for the most recent Task using the desired workspace that was not in a parallel block and returns whether such a workspace was found and the name of the corresponding task
+func findWorkspaceProvider(block TransformedStage, blocks []TransformedStage) (bool, []string) {
+	if *block.Stage.Options.Workspace == "empty" {
+		return true, nil
+	}
+
+	for i := len(blocks) - 1; i >= 0; i-- {
+		previousBlock := blocks[i]
+		if len(previousBlock.Sequential) > 0 {
+			found, provider := findWorkspaceProvider(block, previousBlock.Sequential)
+			if found {
+				return true, provider
+			}
+		} else if len(previousBlock.Sequential) > 0 {
+			// We don't want to use a workspace from a parallel block outside of that block.
+			// TODO: What to do about custom workspaces? Check for erroneous uses specially?
+			// Allow them if only one of the parallel tasks uses the same resource?
+		} else if previousBlock.PipelineTask != nil {
+			if *block.Stage.Options.Workspace == *previousBlock.Stage.Options.Workspace {
+				return true, []string{previousBlock.Task.Name}
+			}
+		} else {
+			// The previousBlock does not yet have a PipelineTask, so we are in a
+			// sequential block. Check the task before it.
+		}
+
+	}
+
+	return false, nil
 }

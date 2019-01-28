@@ -46,7 +46,8 @@ stages:
 				}},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd"),
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
@@ -97,7 +98,8 @@ stages:
 				},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd"),
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineTask("another-stage", "somepipeline-build-somebuild-stage-another-stage-abcd",
 					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-a-working-stage-abcd"))),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
@@ -162,7 +164,8 @@ stages:
 				},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd"),
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineTask("another-stage", "somepipeline-build-somebuild-stage-another-stage-abcd",
 					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-a-working-stage-abcd"))),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
@@ -226,7 +229,25 @@ stages:
 					},
 				},
 			},
-			expectedErrorMsg: "parallel stages not yet implemented for CRD translation",
+			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
+				tb.PipelineTask("another-stage", "somepipeline-build-somebuild-stage-another-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
+			tasks: []*pipelinev1alpha1.Task{
+				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+						tb.ResourceTargetPath("workspace"))),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
+				)),
+				tb.Task("somepipeline-build-somebuild-stage-another-stage-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-another-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("again")),
+				)),
+			},
 		},
 		{
 			name: "environment at top and in stage",
@@ -267,7 +288,8 @@ stages:
 				}},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-stage-with-environment", "somepipeline-build-somebuild-stage-a-stage-with-environmen-abcd"),
+				tb.PipelineTask("a-stage-with-environment", "somepipeline-build-somebuild-stage-a-stage-with-environmen-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-stage-with-environmen-abcd", "somenamespace", tb.TaskSpec(
@@ -508,7 +530,8 @@ stages:
 				}},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd"),
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
@@ -556,7 +579,8 @@ stages:
 				},
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
-				tb.PipelineTask(".--a--.", "somepipeline-build-somebuild-stage-a-abcd"),
+				tb.PipelineTask(".--a--.", "somepipeline-build-somebuild-stage-a-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
 				tb.PipelineTask("wööh!!!!---this-is-cool.", "somepipeline-build-somebuild-stage-wh-this-is-cool-abcd",
 					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-a-abcd"))),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
