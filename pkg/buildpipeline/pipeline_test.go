@@ -260,8 +260,8 @@ stages:
 					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-first-stage-abcd"))),
 				tb.PipelineTask("last-stage", "somepipeline-build-somebuild-stage-last-stage-abcd",
 					// TODO: Switch from this kind of hackish approach to non-resource-based dependencies once they land.
-					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-first-stage-abcd",
-						"somepipeline-build-somebuild-stage-a-working-stage-abcd", "somepipeline-build-somebuild-stage-another-stage-abcd"))),
+					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-a-working-stage-abcd",
+						"somepipeline-build-somebuild-stage-another-stage-abcd", "somepipeline-build-somebuild-stage-first-stage-abcd"))),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-first-stage-abcd", "somenamespace", tb.TaskSpec(
@@ -384,8 +384,8 @@ stages:
 					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-another-stage-abcd"))),
 				tb.PipelineTask("last-stage", "somepipeline-build-somebuild-stage-last-stage-abcd",
 					// TODO: Switch from this kind of hackish approach to non-resource-based dependencies once they land.
-					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-first-stage-abcd",
-						"somepipeline-build-somebuild-stage-a-working-stage-abcd", "somepipeline-build-somebuild-stage-some-other-stage-abcd"))),
+					tb.PipelineTaskInputResource("workspace", "common-workspace", tb.From("somepipeline-build-somebuild-stage-a-working-stage-abcd",
+						"somepipeline-build-somebuild-stage-some-other-stage-abcd", "somepipeline-build-somebuild-stage-first-stage-abcd"))),
 				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-first-stage-abcd", "somenamespace", tb.TaskSpec(
