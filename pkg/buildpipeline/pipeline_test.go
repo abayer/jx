@@ -7,6 +7,7 @@ import (
 	"github.com/knative/pkg/apis"
 	"io/ioutil"
 	"testing"
+	"time"
 )
 
 // TODO: Write a builder for generating the expected objects. Because
@@ -757,7 +758,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					}},
 				}},
 			},
-			expectedErrorMsg: "options at top level not yet supported",
+			expectedErrorMsg: "Retry at top level not yet supported",
 		},
 		{
 			name: "stage_and_step_agent",
@@ -854,6 +855,58 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
 						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
 					tb.Step("stage-wh-this-is-cool-step-0-abcd", "some-image", tb.Command("ls")),
+				)),
+			},
+		},
+		{
+			name: "stage timeout",
+			yaml: `apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: A Working Stage
+    options:
+      timeout:
+        time: 50
+        unit: minutes
+    steps:
+      - command: echo
+        args:
+          - hello
+          - world
+`,
+			expected: &Jenkinsfile{
+				APIVersion: "v0.1",
+				Agent: Agent{
+					Image: "some-image",
+				},
+				Stages: []Stage{{
+					Name: "A Working Stage",
+					Options: StageOptions{
+						RootOptions: RootOptions{
+							Timeout: Timeout{
+								Time: 50,
+								Unit: "minutes",
+							},
+						},
+					},
+					Steps: []Step{{
+						Command:   "echo",
+						Arguments: []string{"hello", "world"},
+					}},
+				}},
+			},
+			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
+			tasks: []*pipelinev1alpha1.Task{
+				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskTimeout(50*time.Minute),
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+						tb.ResourceTargetPath("workspace"))),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
 				)),
 			},
 		},
