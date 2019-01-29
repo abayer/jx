@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -69,10 +70,26 @@ type Timeout struct {
 	Unit TimeoutUnit `yaml:"unit,omitempty"`
 }
 
-// TODO: Not yet implemented in build-pipeline
+func (t Timeout) ToDuration() (*metav1.Duration, error) {
+	durationStr := ""
+	// TODO: Populate a default timeout unit, most likely seconds.
+	if t.Unit != "" {
+		durationStr = fmt.Sprintf("%d%c", t.Time, t.Unit[0])
+	} else {
+		durationStr = fmt.Sprintf("%ds", t.Time)
+	}
+
+	if d, err := time.ParseDuration(durationStr); err != nil {
+		return nil, err
+	} else {
+		return &metav1.Duration{Duration: d}, nil
+	}
+}
+
 type RootOptions struct {
 	Timeout Timeout `yaml:"timeout,omitempty"`
-	Retry   int8    `yaml:"retry,omitempty"`
+	// TODO: Not yet implemented in build-pipeline
+	Retry int8 `yaml:"retry,omitempty"`
 }
 
 type Stash struct {
@@ -86,12 +103,13 @@ type Unstash struct {
 	Dir  string `yaml:"dir,omitempty"`
 }
 
-// TODO: Not yet implemented in build-pipeline
 type StageOptions struct {
 	RootOptions `yaml:",inline"`
 
-	Stash     Stash   `yaml:"stash,omitempty"`
-	Unstash   Unstash `yaml:"unstash,omitempty"`
+	// TODO: Not yet implemented in build-pipeline
+	Stash   Stash   `yaml:"stash,omitempty"`
+	Unstash Unstash `yaml:"unstash,omitempty"`
+
 	Workspace *string `yaml:"workspace,omitempty"`
 }
 
@@ -585,11 +603,18 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		return nil, errors.New("post on stages not yet supported")
 	}
 
+	duration := &metav1.Duration{}
+
 	if !equality.Semantic.DeepEqual(s.Options, StageOptions{}) {
 		o := s.Options
 		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
-			return nil, errors.New("Timeout on stage not yet supported")
+			if d, err := o.Timeout.ToDuration(); err != nil {
+				return nil, err
+			} else {
+				duration = d
+			}
 		}
+
 		if o.Retry != 0 {
 			return nil, errors.New("Retry on stage not yet supported")
 		}
@@ -634,6 +659,10 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 
 		if wsPath != "" {
 			ws.TargetPath = wsPath
+		}
+
+		if !equality.Semantic.DeepEqual(duration, &metav1.Duration{}) {
+			t.Spec.Timeout = duration
 		}
 
 		t.Spec.Inputs = &pipelinev1alpha1.Inputs{
@@ -734,8 +763,21 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 	if len(j.Post) != 0 {
 		return nil, nil, errors.New("post at top level not yet supported")
 	}
+
+	//	duration := &metav1.Duration{}
+
 	if !equality.Semantic.DeepEqual(j.Options, RootOptions{}) {
-		return nil, nil, errors.New("options at top level not yet supported")
+		o := j.Options
+		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
+			if _, err := o.Timeout.ToDuration(); err != nil {
+				return nil, nil, err
+			} else {
+				//				duration = d
+			}
+		}
+		if o.Retry != 0 {
+			return nil, nil, errors.New("Retry at top level not yet supported")
+		}
 	}
 
 	if suffix == "" {
