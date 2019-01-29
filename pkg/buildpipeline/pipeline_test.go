@@ -5,12 +5,26 @@ import (
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/knative/build-pipeline/test/builder"
 	"github.com/knative/pkg/apis"
+	"io/ioutil"
 	"testing"
 )
 
 // TODO: Probably move the YAML to external files, like in Declarative's tests, and write a builder for generating the
 // expected objects. Because as this is now, there are way too many lines here.
 func TestParseJenkinsfileYaml(t *testing.T) {
+	// KS:
+	// 1. Move to standalone function
+	// 2. Change each test's `name` to a string with no spaces in it
+	// 3. Then we can call karlThingToReadYamlFile(new_name_with_no_spaces_in_it) to
+	//    assign the yaml to each individual test
+	// 4. Profit?
+	YamlThing, err := ioutil.ReadFile("test_data/simple_jenkinsfile.yaml")
+	if err != nil {
+		// JenkinsfileToTest := string(YamlThing)
+		t.Fatalf("Could not read yaml from filesystem")
+	}
+	JenkinsfileToTest := string(YamlThing)
+
 	tests := []struct {
 		name             string
 		yaml             string
@@ -21,17 +35,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 	}{
 		{
 			name: "simple jenkinsfile",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
+			yaml: JenkinsfileToTest,
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
