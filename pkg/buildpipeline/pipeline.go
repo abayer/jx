@@ -657,7 +657,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			if wsPath != "" && i == 0 {
 				nestedWsPath = wsPath
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth + 1)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth+1)
 			if err != nil {
 				return nil, err
 			}
@@ -675,7 +675,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			if wsPath != "" && i == 0 {
 				nestedWsPath = wsPath
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth + 1)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth+1)
 			if err != nil {
 				return nil, err
 			}
@@ -835,7 +835,7 @@ func findWorkspaceProvider(block TransformedStage, blocks []TransformedStage) (b
 // Find the end tasks for this block, traversing down to the end blocks of any nested sequential or parallel blocks as well.
 func findEndTasks(block TransformedStage) []string {
 	if len(block.Sequential) > 0 {
-		return findEndTasks(block.Sequential[len(block.Sequential) - 1])
+		return findEndTasks(block.Sequential[len(block.Sequential)-1])
 	} else if len(block.Parallel) > 0 {
 		var endTasks []string
 		for _, pBlock := range block.Parallel {

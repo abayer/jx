@@ -219,7 +219,7 @@ stages:
 					{
 						Name: "First Stage",
 						Steps: []Step{{
-							Command: "echo",
+							Command:   "echo",
 							Arguments: []string{"first"},
 						}},
 					},
@@ -245,7 +245,7 @@ stages:
 					{
 						Name: "Last Stage",
 						Steps: []Step{{
-							Command: "echo",
+							Command:   "echo",
 							Arguments: []string{"last"},
 						}},
 					},
@@ -329,7 +329,7 @@ stages:
 					{
 						Name: "First Stage",
 						Steps: []Step{{
-							Command: "echo",
+							Command:   "echo",
 							Arguments: []string{"first"},
 						}},
 					},
@@ -367,7 +367,7 @@ stages:
 					{
 						Name: "Last Stage",
 						Steps: []Step{{
-							Command: "echo",
+							Command:   "echo",
 							Arguments: []string{"last"},
 						}},
 					},
