@@ -14,7 +14,6 @@ import (
 func TestParseJenkinsfileYaml(t *testing.T) {
 	tests := []struct {
 		name             string
-		yaml             string
 		expected         *Jenkinsfile
 		pipeline         *pipelinev1alpha1.Pipeline
 		tasks            []*pipelinev1alpha1.Task
@@ -22,7 +21,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 	}{
 		{
 			name: "simple_jenkinsfile",
-			yaml: "simple_jenkinsfile",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -51,7 +49,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "multiple_stages",
-			yaml: "multiple_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -96,7 +93,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "nested_stages",
-			yaml: "nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -146,7 +142,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "parallel_stages",
-			yaml: "parallel_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -226,7 +221,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "parallel_and_nested_stages",
-			yaml: "parallel_and_nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -325,7 +319,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "environment_at_top_and_in_stage",
-			yaml: "environment_at_top_and_in_stage",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -364,7 +357,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "syntactic_sugar_step_and_a_command",
-			yaml: "syntactic_sugar_step_and_a_command",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -391,7 +383,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "post",
-			yaml: "post",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -441,7 +432,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "top_level_and_stage_options",
-			yaml: "top_level_and_stage_options",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -483,7 +473,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "stage_and_step_agent",
-			yaml: "stage_and_step_agent",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Stages: []Stage{{
@@ -522,7 +511,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "mangled_task_names",
-			yaml: "mangled_task_names",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -570,13 +558,13 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.yaml + ".yaml")
+			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.name + ".yaml")
 			if err != nil {
-				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.yaml+".yaml")
+				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.name+".yaml")
 			}
-			tt.yaml = string(YamlToRead)
+			tt.name = string(YamlToRead)
 
-			parsed, err := ParseJenkinsfileYaml(tt.yaml)
+			parsed, err := ParseJenkinsfileYaml(tt.name)
 			if err != nil {
 				t.Fatalf("Failed to parse YAML for %s: %q", tt.name, err)
 			}
