@@ -6,6 +6,7 @@ import (
 	tb "github.com/knative/build-pipeline/test/builder"
 	"github.com/knative/pkg/apis"
 	"io/ioutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
 )
@@ -860,21 +861,6 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		},
 		{
 			name: "stage timeout",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        time: 50
-        unit: minutes
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -903,6 +889,41 @@ stages:
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskTimeout(50*time.Minute),
+					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+						tb.ResourceTargetPath("workspace"))),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
+				)),
+			},
+		},
+		{
+			name: "top-level timeout",
+			expected: &Jenkinsfile{
+				APIVersion: "v0.1",
+				Agent: Agent{
+					Image: "some-image",
+				},
+				Options: RootOptions{
+					Timeout: Timeout{
+						Time: 50,
+						Unit: "minutes",
+					},
+				},
+				Stages: []Stage{{
+					Name: "A Working Stage",
+					Steps: []Step{{
+						Command:   "echo",
+						Arguments: []string{"hello", "world"},
+					}},
+				}},
+			},
+			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
+				tb.PipelineTimeout(&metav1.Duration{Duration: 50*time.Minute}),
+				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace")),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
+			tasks: []*pipelinev1alpha1.Task{
+				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
 						tb.ResourceTargetPath("workspace"))),
 					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
