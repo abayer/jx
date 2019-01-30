@@ -570,13 +570,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// fmt.Println("tt.name is", tt.name)
-			// fmt.Println("filename will be test_data/", tt.yaml)
-			// fmt.Println("Generate filename")
-			// FullPathToFilename := "test_data/" + tt.yaml + ".yaml"
-			// fmt.Println("FullPathToFilename is: ", FullPathToFilename)
 
-			// // Read the file name as tt.name?
 			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.yaml + ".yaml")
 			if err != nil {
 				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.yaml+".yaml")
