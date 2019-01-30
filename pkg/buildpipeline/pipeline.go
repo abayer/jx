@@ -532,9 +532,6 @@ func (j *Jenkinsfile) toStepEnvVars() []corev1.EnvVar {
 type TransformedStage struct {
 	Stage Stage
 	// Only one of Sequential, Parallel, and Task is non-empty
-	// TODO: Most blocks for Sequential/Parallel handling are identical. Maybe
-	// just use a single `Nested []TransformedStage` field and have a `Type string`
-	// field or similar to distinguish between sequential/parallel.
 	Sequential []*TransformedStage
 	Parallel   []*TransformedStage
 	Task       *pipelinev1alpha1.Task
@@ -543,7 +540,7 @@ type TransformedStage struct {
 	PipelineTask *pipelinev1alpha1.PipelineTask
 	// The depth of this stage in the full tree of stages
 	Depth int8
-	// The stage enclosing this stage, or nil if it is at top level
+	// The parallel or sequntial stage enclosing this stage, or nil if this stage is at top level
 	EnclosingStage *TransformedStage
 	// The stage immediately before this stage at the same depth, or nil if there is no such stage
 	PreviousSiblingStage *TransformedStage
@@ -761,7 +758,7 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 
 	p.SetDefaults()
 
-	var previousBlockStage *TransformedStage
+	var previousStage *TransformedStage
 	var tasks []*pipelinev1alpha1.Task
 
 	baseEnv := j.toStepEnvVars()
@@ -771,48 +768,48 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 		if len(tasks) == 0 {
 			wsPath = "workspace"
 		}
-		block, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, suffix, 0, nil, previousBlockStage)
+		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, suffix, 0, nil, previousStage)
 		if err != nil {
 			return nil, nil, err
 		}
-		previousBlockStage = block
+		previousStage = stage
 
-		tasks = append(tasks, block.getLinearTasks()...)
-		p.Spec.Tasks = append(p.Spec.Tasks, createPipelineTasks(block)...)
+		tasks = append(tasks, stage.getLinearTasks()...)
+		p.Spec.Tasks = append(p.Spec.Tasks, createPipelineTasks(stage)...)
 	}
 
 	return p, tasks, nil
 }
 
-func createPipelineTasks(block *TransformedStage) []pipelinev1alpha1.PipelineTask {
-	if block.Stage.Options.Workspace == nil {
+func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTask {
+	if stage.Stage.Options.Workspace == nil {
 		val := "default"
-		block.Stage.Options.Workspace = &val
+		stage.Stage.Options.Workspace = &val
 	}
 
-	if block.isSequential() {
+	if stage.isSequential() {
 		var pTasks []pipelinev1alpha1.PipelineTask
-		for _, seqBlock := range block.Sequential {
-			pTasks = append(pTasks, createPipelineTasks(seqBlock)...)
+		for _, nestedStage := range stage.Sequential {
+			pTasks = append(pTasks, createPipelineTasks(nestedStage)...)
 		}
 		return pTasks
-	} else if block.isParallel() {
+	} else if stage.isParallel() {
 		var pTasks []pipelinev1alpha1.PipelineTask
-		for _, parBlock := range block.Parallel {
-			pTasks = append(pTasks, createPipelineTasks(parBlock)...)
+		for _, nestedStage := range stage.Parallel {
+			pTasks = append(pTasks, createPipelineTasks(nestedStage)...)
 		}
 		return pTasks
 	} else {
 		pTask := pipelinev1alpha1.PipelineTask{
-			Name: block.Stage.TaskName(), // TODO: What should this actually be named?
+			Name: stage.Stage.TaskName(), // TODO: What should this actually be named?
 			TaskRef: pipelinev1alpha1.TaskRef{
-				Name: block.Task.Name,
+				Name: stage.Task.Name,
 			},
 		}
 
-		_, provider := findWorkspaceProvider(block, block.getEnclosing(0))
+		_, provider := findWorkspaceProvider(stage, stage.getEnclosing(0))
 		var previousStageNames []string
-		for _, previousStage := range findPreviousNonBlockStages(*block) {
+		for _, previousStage := range findPreviousNonBlockStages(*stage) {
 			previousStageNames = append(previousStageNames, previousStage.Task.Name)
 		}
 		pTask.Resources = &pipelinev1alpha1.PipelineTaskResources{
@@ -830,14 +827,14 @@ func createPipelineTasks(block *TransformedStage) []pipelinev1alpha1.PipelineTas
 				},
 			},
 		}
-		block.PipelineTask = &pTask
+		stage.PipelineTask = &pTask
 
 		return []pipelinev1alpha1.PipelineTask{pTask}
 	}
 }
 
 // Looks for the most recent Task using the desired workspace that was not in the
-// same parallel block and returns the name of the corresponding Task.
+// same parallel stage and returns the name of the corresponding Task.
 func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 	if *stage.Stage.Options.Workspace == "empty" {
 		return true, nil
@@ -850,8 +847,8 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 				return true, provider
 			}
 		} else if sibling.isParallel() {
-			// We don't want to use a workspace from a parallel block outside of that block,
-			// but we do need to descend inwards in case stage is in that same block.
+			// We don't want to use a workspace from a parallel stage outside of that stage,
+			// but we do need to descend inwards in case stage is in that same stage.
 			if stage.getEnclosing(sibling.Depth) == sibling {
 				for _, nested := range sibling.Parallel {
 					// Pick the parallel branch that has stage
@@ -870,7 +867,7 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 				return true, []string{sibling.Task.Name}
 			}
 		} else {
-			// We are in a sequential block and sibling has not had its PipelineTask created.
+			// We are in a sequential stage and sibling has not had its PipelineTask created.
 			// Check the task before it so we don't use a workspace of a later task.
 		}
 		sibling = sibling.PreviousSiblingStage
@@ -879,27 +876,29 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 	return false, nil
 }
 
-// Find the end tasks for this block, traversing down to the end blocks of any nested sequential or parallel blocks as well.
-func findEndStages(block TransformedStage) []*TransformedStage {
-	if block.isSequential() {
-		return findEndStages(*block.Sequential[len(block.Sequential)-1])
-	} else if block.isParallel() {
+// Find the end tasks for this stage, traversing down to the end stages of any
+// nested sequential or parallel stages as well.
+func findEndStages(stage TransformedStage) []*TransformedStage {
+	if stage.isSequential() {
+		return findEndStages(*stage.Sequential[len(stage.Sequential)-1])
+	} else if stage.isParallel() {
 		var endTasks []*TransformedStage
-		for _, pBlock := range block.Parallel {
-			endTasks = append(endTasks, findEndStages(*pBlock)...)
+		for _, pStage := range stage.Parallel {
+			endTasks = append(endTasks, findEndStages(*pStage)...)
 		}
 		return endTasks
 	} else {
-		return []*TransformedStage{&block}
+		return []*TransformedStage{&stage}
 	}
 }
 
-// Find the tasks that run immediately before this block
-func findPreviousNonBlockStages(block TransformedStage) []*TransformedStage {
-	if block.PreviousSiblingStage != nil {
-		return findEndStages(*block.PreviousSiblingStage)
-	} else if block.EnclosingStage != nil {
-		return findPreviousNonBlockStages(*block.EnclosingStage)
+// Find the tasks that run immediately before this stage, not including
+// sequential or parallel wrapper stages.
+func findPreviousNonBlockStages(stage TransformedStage) []*TransformedStage {
+	if stage.PreviousSiblingStage != nil {
+		return findEndStages(*stage.PreviousSiblingStage)
+	} else if stage.EnclosingStage != nil {
+		return findPreviousNonBlockStages(*stage.EnclosingStage)
 	} else {
 		return []*TransformedStage{}
 	}
