@@ -1,0 +1,10 @@
+apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: . -a- .
+    steps:
+      - command: ls
+  - name: Wööh!!!! - This is cool.
+    steps:
+      - command: ls
