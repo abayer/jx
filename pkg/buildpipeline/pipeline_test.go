@@ -20,7 +20,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		tasks            []*pipelinev1alpha1.Task
 		expectedErrorMsg string
 	}{
-		{ // simple jenkinsfile
+		{
 			name: "simple_jenkinsfile",
 			yaml: "simple_jenkinsfile",
 			expected: &Jenkinsfile{
@@ -48,9 +48,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
 				)),
 			},
-		}, // end simple jenkinsfile
-
-		{ // multiple stages
+		},
+		{
 			name: "multiple_stages",
 			yaml: "multiple_stages",
 			expected: &Jenkinsfile{
@@ -94,8 +93,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-another-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("again")),
 				)),
 			},
-		}, // end multiple stages
-		{ // nested stages
+		},
+		{
 			name: "nested_stages",
 			yaml: "nested_stages",
 			expected: &Jenkinsfile{
@@ -144,8 +143,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-another-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("again")),
 				)),
 			},
-		}, // end nested stages
-		{ // parallel stages
+		},
+		{
 			name: "parallel_stages",
 			yaml: "parallel_stages",
 			expected: &Jenkinsfile{
@@ -224,8 +223,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-last-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("last")),
 				)),
 			},
-		}, // end parallel stages
-		{ // parallel and nested stages
+		},
+		{
 			name: "parallel_and_nested_stages",
 			yaml: "parallel_and_nested_stages",
 			expected: &Jenkinsfile{
@@ -323,8 +322,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-last-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("last")),
 				)),
 			},
-		}, // end parallel and nested stages
-		{ // environment at top and in stage
+		},
+		{
 			name: "environment_at_top_and_in_stage",
 			yaml: "environment_at_top_and_in_stage",
 			expected: &Jenkinsfile{
@@ -362,8 +361,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 						tb.EnvVar("SOME_VAR", "A value for the env var"), tb.EnvVar("SOME_OTHER_VAR", "A value for the other env var")),
 				)),
 			},
-		}, // end environment at top and in stage
-		{ // syntactic sugar step and a command
+		},
+		{
 			name: "syntactic_sugar_step_and_a_command",
 			yaml: "syntactic_sugar_step_and_a_command",
 			expected: &Jenkinsfile{
@@ -389,8 +388,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 				}},
 			},
 			expectedErrorMsg: "syntactic sugar steps not yet supported",
-		}, // end syntactic sugar step and a command
-		{ // post
+		},
+		{
 			name: "post",
 			yaml: "post",
 			expected: &Jenkinsfile{
@@ -439,8 +438,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 				}},
 			},
 			expectedErrorMsg: "post on stages not yet supported",
-		}, // end post
-		{ // top-level and stage options
+		},
+		{
 			name: "top_level_and_stage_options",
 			yaml: "top_level_and_stage_options",
 			expected: &Jenkinsfile{
@@ -481,8 +480,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 				}},
 			},
 			expectedErrorMsg: "options at top level not yet supported",
-		}, // END top-level and stage options
-		{ // stage and step agent
+		},
+		{
 			name: "stage_and_step_agent",
 			yaml: "stage_and_step_agent",
 			expected: &Jenkinsfile{
@@ -520,8 +519,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-a-working-stage-step-1-abcd", "some-image", tb.Command("echo"), tb.Args("goodbye")),
 				)),
 			},
-		}, // END stage and step agent
-		{ // mangled task names
+		},
+		{
 			name: "mangled_task_names",
 			yaml: "mangled_task_names",
 			expected: &Jenkinsfile{
@@ -565,8 +564,8 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-wh-this-is-cool-step-0-abcd", "some-image", tb.Command("ls")),
 				)),
 			},
-		}, // END mangled task names
-	} // ENDS array of tests
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -612,8 +611,9 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			}
 		})
 	}
-} // Ends TestParseJenkinsfileYaml
+}
 
+// TODO: Externalize these too. Want to get this in to avoid merge conflicts later.
 func TestFailedValidation(t *testing.T) {
 	tests := []struct {
 		name          string
