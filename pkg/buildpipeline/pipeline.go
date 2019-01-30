@@ -550,22 +550,22 @@ type TransformedStage struct {
 	// TODO: Add the equivalent reverse relationship
 }
 
-func (ts TransformedStage) isSequentialStage() bool {
+func (ts TransformedStage) isSequential() bool {
 	return len(ts.Sequential) > 0
 }
 
-func (ts TransformedStage) isParallelStage() bool {
+func (ts TransformedStage) isParallel() bool {
 	return len(ts.Parallel) > 0
 }
 
 func (ts TransformedStage) getLinearTasks() []*pipelinev1alpha1.Task {
-	if ts.isSequentialStage() {
+	if ts.isSequential() {
 		var tasks []*pipelinev1alpha1.Task
 		for _, seqTs := range ts.Sequential {
 			tasks = append(tasks, seqTs.getLinearTasks()...)
 		}
 		return tasks
-	} else if ts.isParallelStage() {
+	} else if ts.isParallel() {
 		var tasks []*pipelinev1alpha1.Task
 		for _, parTs := range ts.Parallel {
 			tasks = append(tasks, parTs.getLinearTasks()...)
@@ -585,11 +585,14 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		o := s.Options
 		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
 			return nil, errors.New("Timeout on stage not yet supported")
-		} else if o.Retry != 0 {
+		}
+		if o.Retry != 0 {
 			return nil, errors.New("Retry on stage not yet supported")
-		} else if !equality.Semantic.DeepEqual(o.Stash, Stash{}) {
+		}
+		if !equality.Semantic.DeepEqual(o.Stash, Stash{}) {
 			return nil, errors.New("Stash on stage not yet supported")
-		} else if !equality.Semantic.DeepEqual(o.Unstash, Unstash{}) {
+		}
+		if !equality.Semantic.DeepEqual(o.Unstash, Unstash{}) {
 			return nil, errors.New("Unstash on stage not yet supported")
 		}
 	}
@@ -633,7 +636,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			Resources: []pipelinev1alpha1.TaskResource{*ws,
 				{
 					Name: "temp-ordering-resource",
-					Type: pipelinev1alpha1.PipelineResourceTypeGit,
+					Type: pipelinev1alpha1.PipelineResourceTypeImage,
 				},
 			},
 		}
@@ -646,7 +649,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 				},
 				{
 					Name: "temp-ordering-resource",
-					Type: pipelinev1alpha1.PipelineResourceTypeGit,
+					Type: pipelinev1alpha1.PipelineResourceTypeImage,
 				},
 			},
 		}
@@ -669,8 +672,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 				return nil, errors.New("syntactic sugar steps not yet supported")
 			}
 		}
-		ts := TransformedStage{Stage: s, Task: t, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}
-		return &ts, nil
+		return &TransformedStage{Stage: s, Task: t, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}, nil
 	}
 
 	if len(s.Stages) > 0 {
@@ -751,7 +753,7 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 				{
 					// TODO: Switch from this kind of hackish approach to non-resource-based dependencies once they land.
 					Name: "temp-ordering-resource",
-					Type: pipelinev1alpha1.PipelineResourceTypeGit,
+					Type: pipelinev1alpha1.PipelineResourceTypeImage,
 				},
 			},
 		},
@@ -788,13 +790,13 @@ func createPipelineTasks(block *TransformedStage) []pipelinev1alpha1.PipelineTas
 		block.Stage.Options.Workspace = &val
 	}
 
-	if block.isSequentialStage() {
+	if block.isSequential() {
 		var pTasks []pipelinev1alpha1.PipelineTask
 		for _, seqBlock := range block.Sequential {
 			pTasks = append(pTasks, createPipelineTasks(seqBlock)...)
 		}
 		return pTasks
-	} else if block.isParallelStage() {
+	} else if block.isParallel() {
 		var pTasks []pipelinev1alpha1.PipelineTask
 		for _, parBlock := range block.Parallel {
 			pTasks = append(pTasks, createPipelineTasks(parBlock)...)
@@ -842,12 +844,12 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 	}
 
 	for sibling != nil {
-		if sibling.isSequentialStage() {
+		if sibling.isSequential() {
 			found, provider := findWorkspaceProvider(stage, sibling.Sequential[len(sibling.Sequential)-1])
 			if found {
 				return true, provider
 			}
-		} else if sibling.isParallelStage() {
+		} else if sibling.isParallel() {
 			// We don't want to use a workspace from a parallel block outside of that block,
 			// but we do need to descend inwards in case stage is in that same block.
 			if stage.getEnclosing(sibling.Depth) == sibling {
@@ -879,18 +881,16 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 
 // Find the end tasks for this block, traversing down to the end blocks of any nested sequential or parallel blocks as well.
 func findEndStages(block TransformedStage) []*TransformedStage {
-	if block.isSequentialStage() {
+	if block.isSequential() {
 		return findEndStages(*block.Sequential[len(block.Sequential)-1])
-	} else if block.isParallelStage() {
+	} else if block.isParallel() {
 		var endTasks []*TransformedStage
 		for _, pBlock := range block.Parallel {
 			endTasks = append(endTasks, findEndStages(*pBlock)...)
 		}
 		return endTasks
-	} else if block.Task != nil {
-		return []*TransformedStage{&block}
 	} else {
-		panic("Stage must either be sequential, parallel, or atomic!")
+		return []*TransformedStage{&block}
 	}
 }
 
