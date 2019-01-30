@@ -1,7 +1,6 @@
 package buildpipeline
 
 import (
-	"fmt"
 	"github.com/google/go-cmp/cmp"
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/knative/build-pipeline/test/builder"
@@ -10,8 +9,8 @@ import (
 	"testing"
 )
 
-// TODO: Probably move the YAML to external files, like in Declarative's tests, and write a builder for generating the
-// expected objects. Because as this is now, there are way too many lines here.
+// TODO: Write a builder for generating the expected objects. Because
+// as this is now, there are way too many lines here.
 func TestParseJenkinsfileYaml(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -571,16 +570,17 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println("tt.name is", tt.name)
-			fmt.Println("filename will be test_data/", tt.yaml)
+			// fmt.Println("tt.name is", tt.name)
+			// fmt.Println("filename will be test_data/", tt.yaml)
+			// fmt.Println("Generate filename")
+			// FullPathToFilename := "test_data/" + tt.yaml + ".yaml"
+			// fmt.Println("FullPathToFilename is: ", FullPathToFilename)
 
-			// Read the file name as tt.name?
-			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.yaml)
+			// // Read the file name as tt.name?
+			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.yaml + ".yaml")
 			if err != nil {
-				// JenkinsfileToTest := string(YamlThing)
 				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.yaml+".yaml")
 			}
-			// JenkinsfileToTest := string(YamlToRead)
 			tt.yaml = string(YamlToRead)
 
 			parsed, err := ParseJenkinsfileYaml(tt.yaml)
