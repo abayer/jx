@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	PipelineFileName = "Jenkinsfile.yaml"
+	PipelineFileName = "jenkins-x.yaml"
 )
 
 type Jenkinsfile struct {
@@ -764,15 +764,15 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 		return nil, nil, errors.New("post at top level not yet supported")
 	}
 
-	//	duration := &metav1.Duration{}
+	duration := &metav1.Duration{}
 
 	if !equality.Semantic.DeepEqual(j.Options, RootOptions{}) {
 		o := j.Options
 		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
-			if _, err := o.Timeout.ToDuration(); err != nil {
+			if d, err := o.Timeout.ToDuration(); err != nil {
 				return nil, nil, err
 			} else {
-				//				duration = d
+				duration = d
 			}
 		}
 		if o.Retry != 0 {
@@ -812,6 +812,10 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 	p.SetDefaults()
 
 	var previousStage *TransformedStage
+	if !equality.Semantic.DeepEqual(duration, &metav1.Duration{}) {
+		p.Spec.Timeout = duration
+	}
+
 	var tasks []*pipelinev1alpha1.Task
 
 	baseEnv := j.toStepEnvVars()
