@@ -1,6 +1,7 @@
 package buildpipeline
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/knative/build-pipeline/test/builder"
@@ -12,19 +13,6 @@ import (
 // TODO: Probably move the YAML to external files, like in Declarative's tests, and write a builder for generating the
 // expected objects. Because as this is now, there are way too many lines here.
 func TestParseJenkinsfileYaml(t *testing.T) {
-	// KS:
-	// 1. Move to standalone function
-	// 2. Change each test's `name` to a string with no spaces in it
-	// 3. Then we can call karlThingToReadYamlFile(new_name_with_no_spaces_in_it) to
-	//    assign the yaml to each individual test
-	// 4. Profit?
-	YamlThing, err := ioutil.ReadFile("test_data/simple_jenkinsfile.yaml")
-	if err != nil {
-		// JenkinsfileToTest := string(YamlThing)
-		t.Fatalf("Could not read yaml from filesystem")
-	}
-	JenkinsfileToTest := string(YamlThing)
-
 	tests := []struct {
 		name             string
 		yaml             string
@@ -33,9 +21,9 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 		tasks            []*pipelinev1alpha1.Task
 		expectedErrorMsg string
 	}{
-		{
-			name: "simple jenkinsfile",
-			yaml: JenkinsfileToTest,
+		{ // simple jenkinsfile
+			name: "simple_jenkinsfile",
+			yaml: "simple_jenkinsfile",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -61,24 +49,11 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
 				)),
 			},
-		},
-		{
-			name: "multiple stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-  - name: Another stage
-    steps:
-      - command: echo
-        args: ['again']
-`,
+		}, // end simple jenkinsfile
+
+		{ // multiple stages
+			name: "multiple_stages",
+			yaml: "multiple_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -120,26 +95,10 @@ stages:
 					tb.Step("stage-another-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("again")),
 				)),
 			},
-		},
-		{
-			name: "nested stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: Parent Stage
-    stages:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Another stage
-        steps:
-          - command: echo
-            args: ['again']
-`,
+		}, // end multiple stages
+		{ // nested stages
+			name: "nested_stages",
+			yaml: "nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -186,34 +145,10 @@ stages:
 					tb.Step("stage-another-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("again")),
 				)),
 			},
-		},
-		{
-			name: "parallel stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: First Stage
-    steps:
-      - command: echo
-        args: ['first']
-  - name: Parent Stage
-    parallel:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Another stage
-        steps:
-          - command: echo
-            args: ['again']
-  - name: Last Stage
-    steps:
-      - command: echo
-        args: ['last']
-`,
+		}, // end nested stages
+		{ // parallel stages
+			name: "parallel_stages",
+			yaml: "parallel_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -290,40 +225,10 @@ stages:
 					tb.Step("stage-last-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("last")),
 				)),
 			},
-		},
-		{
-			name: "parallel and nestedstages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: First Stage
-    steps:
-      - command: echo
-        args: ['first']
-  - name: Parent Stage
-    parallel:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Nested In Parallel
-        stages:
-          - name: Another stage
-            steps:
-              - command: echo
-                args: ['again']
-          - name: Some other stage
-            steps:
-              - command: echo
-                args: ['otherwise']
-  - name: Last Stage
-    steps:
-      - command: echo
-        args: ['last']
-`,
+		}, // end parallel stages
+		{ // parallel and nested stages
+			name: "parallel_and_nested_stages",
+			yaml: "parallel_and_nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -419,24 +324,10 @@ stages:
 					tb.Step("stage-last-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("last")),
 				)),
 			},
-		},
-		{
-			name: "environment at top and in stage",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-environment:
-  - name: SOME_VAR
-    value: A value for the env var
-stages:
-  - name: A stage with environment
-    environment:
-        - name: SOME_OTHER_VAR
-          value: A value for the other env var
-    steps:
-      - command: echo
-        args: ['hello', '${SOME_OTHER_VAR}']
-`,
+		}, // end parallel and nested stages
+		{ // environment at top and in stage
+			name: "environment_at_top_and_in_stage",
+			yaml: "environment_at_top_and_in_stage",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -472,24 +363,10 @@ stages:
 						tb.EnvVar("SOME_VAR", "A value for the env var"), tb.EnvVar("SOME_OTHER_VAR", "A value for the other env var")),
 				)),
 			},
-		},
-		{
-			name: "syntactic sugar step and a command",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-      - step: "some-step"
-        options:
-          firstParam: "some value"
-          secondParam: "some other value"
-`,
+		}, // end environment at top and in stage
+		{ // syntactic sugar step and a command
+			name: "syntactic_sugar_step_and_a_command",
+			yaml: "syntactic_sugar_step_and_a_command",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -513,39 +390,10 @@ stages:
 				}},
 			},
 			expectedErrorMsg: "syntactic sugar steps not yet supported",
-		},
-		{
+		}, // end syntactic sugar step and a command
+		{ // post
 			name: "post",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-    post:
-      - condition: success
-        actions:
-          - name: mail
-            options:
-              to: foo@bar.com
-              subject: "Yay, it passed"
-      - condition: failure
-        actions:
-          - name: slack
-            options:
-              whatever: the
-              slack: config
-              actually: "is. =)"
-      - condition: always
-        actions:
-          - name: junit
-            options:
-              pattern: "target/surefire-reports/**/*.xml"
-`,
+			yaml: "post",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -592,36 +440,10 @@ stages:
 				}},
 			},
 			expectedErrorMsg: "post on stages not yet supported",
-		},
-		{
-			name: "top-level and stage options",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  timeout:
-    time: 50
-    unit: minutes
-  retry: 3
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        time: 5
-        unit: seconds
-      retry: 4
-      stash:
-        name: Some Files
-        files: "somedir/**/*"
-      unstash:
-        name: Earlier Files
-        dir: some/sub/dir
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
+		}, // end post
+		{ // top-level and stage options
+			name: "top_level_and_stage_options",
+			yaml: "top_level_and_stage_options",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -660,24 +482,10 @@ stages:
 				}},
 			},
 			expectedErrorMsg: "options at top level not yet supported",
-		},
-		{
-			name: "stage and step agent",
-			yaml: `apiVersion: v0.1
-stages:
-  - name: A Working Stage
-    agent:
-      image: some-image
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-        agent:
-          image: some-other-image
-      - command: echo
-        args: ['goodbye']
-`,
+		}, // END top-level and stage options
+		{ // stage and step agent
+			name: "stage_and_step_agent",
+			yaml: "stage_and_step_agent",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Stages: []Stage{{
@@ -713,20 +521,10 @@ stages:
 					tb.Step("stage-a-working-stage-step-1-abcd", "some-image", tb.Command("echo"), tb.Args("goodbye")),
 				)),
 			},
-		},
-		{
-			name: "mangled task names",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: . -a- .
-    steps:
-      - command: ls
-  - name: Wööh!!!! - This is cool.
-    steps:
-      - command: ls
-`,
+		}, // END stage and step agent
+		{ // mangled task names
+			name: "mangled_task_names",
+			yaml: "mangled_task_names",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -768,11 +566,23 @@ stages:
 					tb.Step("stage-wh-this-is-cool-step-0-abcd", "some-image", tb.Command("ls")),
 				)),
 			},
-		},
-	}
+		}, // END mangled task names
+	} // ENDS array of tests
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println("tt.name is", tt.name)
+			fmt.Println("filename will be test_data/", tt.yaml)
+
+			// Read the file name as tt.name?
+			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.yaml)
+			if err != nil {
+				// JenkinsfileToTest := string(YamlThing)
+				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.yaml+".yaml")
+			}
+			// JenkinsfileToTest := string(YamlToRead)
+			tt.yaml = string(YamlToRead)
+
 			parsed, err := ParseJenkinsfileYaml(tt.yaml)
 			if err != nil {
 				t.Fatalf("Failed to parse YAML for %s: %q", tt.name, err)
@@ -808,7 +618,7 @@ stages:
 			}
 		})
 	}
-}
+} // Ends TestParseJenkinsfileYaml
 
 func TestFailedValidation(t *testing.T) {
 	tests := []struct {
