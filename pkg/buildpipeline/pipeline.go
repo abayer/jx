@@ -573,7 +573,14 @@ func (ts TransformedStage) getLinearTasks() []*pipelinev1alpha1.Task {
 	}
 }
 
-func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, suffix string, depth int8, enclosingStage *TransformedStage, previousSiblingStage *TransformedStage) (*TransformedStage, error) {
+// If the workspace is nil, sets it to the parent's workspace
+func (ts *TransformedStage) computeWorkspace(parentWorkspace string) {
+	if ts.Stage.Options.Workspace == nil {
+		ts.Stage.Options.Workspace = &parentWorkspace
+	}
+}
+
+func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, parentWorkspace string, suffix string, depth int8, enclosingStage *TransformedStage, previousSiblingStage *TransformedStage) (*TransformedStage, error) {
 	if len(s.Post) != 0 {
 		return nil, errors.New("post on stages not yet supported")
 	}
@@ -669,12 +676,15 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 				return nil, errors.New("syntactic sugar steps not yet supported")
 			}
 		}
-		return &TransformedStage{Stage: s, Task: t, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}, nil
+		ts := TransformedStage{Stage: s, Task: t, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}
+		ts.computeWorkspace(parentWorkspace)
+		return &ts, nil
 	}
 
 	if len(s.Stages) > 0 {
 		var tasks []*TransformedStage
 		ts := TransformedStage{Stage: s, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}
+		ts.computeWorkspace(parentWorkspace)
 
 		for i, nested := range s.Stages {
 			nestedWsPath := ""
@@ -685,7 +695,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			if i > 0 {
 				nestedPreviousSibling = tasks[i-1]
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth+1, &ts, nestedPreviousSibling)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nestedPreviousSibling)
 			if err != nil {
 				return nil, err
 			}
@@ -699,13 +709,14 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 	if len(s.Parallel) > 0 {
 		var tasks []*TransformedStage
 		ts := TransformedStage{Stage: s, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}
+		ts.computeWorkspace(parentWorkspace)
 
 		for i, nested := range s.Parallel {
 			nestedWsPath := ""
 			if wsPath != "" && i == 0 {
 				nestedWsPath = wsPath
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, suffix, depth+1, &ts, nil)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -768,7 +779,7 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 		if len(tasks) == 0 {
 			wsPath = "workspace"
 		}
-		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, suffix, 0, nil, previousStage)
+		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, "default", suffix, 0, nil, previousStage)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -782,11 +793,6 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 }
 
 func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTask {
-	if stage.Stage.Options.Workspace == nil {
-		val := "default"
-		stage.Stage.Options.Workspace = &val
-	}
-
 	if stage.isSequential() {
 		var pTasks []pipelinev1alpha1.PipelineTask
 		for _, nestedStage := range stage.Sequential {
