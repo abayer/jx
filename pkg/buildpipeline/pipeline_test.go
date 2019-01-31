@@ -1001,6 +1001,15 @@ func TestFailedValidation(t *testing.T) {
 				Paths:   []string{"apiVersion"},
 			},
 		},
+		/* TODO: Once we figure out how to differentiate between an empty agent and no agent specified...
+		{
+			name: "empty_agent",
+			expectedError: &apis.FieldError{
+				Message: "Invalid apiVersion format: must be 'v(digits).(digits)",
+				Paths:   []string{"apiVersion"},
+			},
+		},
+		*/
 		{
 			name: "agent_with_both_image_and_label",
 			expectedError: apis.ErrMultipleOneOf("label", "image").
