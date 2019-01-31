@@ -500,6 +500,107 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			},
 		},
 		{
+			name: "inherited_custom_workspaces",
+			expected: &Jenkinsfile{
+				APIVersion: "v0.1",
+				Agent: Agent{
+					Image: "some-image",
+				},
+				Stages: []Stage{
+					{
+						Name: "stage1",
+						Steps: []Step{{
+							Command: "ls",
+						}},
+					},
+					{
+						Name: "stage2",
+						Options: StageOptions{
+							Workspace: &customWorkspace,
+						},
+						Stages: []Stage{
+							{
+								Name: "stage3",
+								Steps: []Step{{
+									Command: "ls",
+								}},
+							},
+							{
+								Name: "stage4",
+								Options: StageOptions{
+									Workspace: &defaultWorkspace,
+								},
+								Steps: []Step{{
+									Command: "ls",
+								}},
+							},
+							{
+								Name: "stage5",
+								Steps: []Step{{
+									Command: "ls",
+								}},
+							},
+						},
+					},
+				},
+			},
+			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
+				tb.PipelineTask("stage1", "somepipeline-build-somebuild-stage-stage1-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace"),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource")),
+				tb.PipelineTask("stage3", "somepipeline-build-somebuild-stage-stage3-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace"),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource",
+						tb.From("somepipeline-build-somebuild-stage-stage1-abcd"))),
+				tb.PipelineTask("stage4", "somepipeline-build-somebuild-stage-stage4-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace",
+						tb.From("somepipeline-build-somebuild-stage-stage1-abcd")),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource",
+						tb.From("somepipeline-build-somebuild-stage-stage3-abcd"))),
+				tb.PipelineTask("stage5", "somepipeline-build-somebuild-stage-stage5-abcd",
+					tb.PipelineTaskInputResource("workspace", "common-workspace",
+						tb.From("somepipeline-build-somebuild-stage-stage3-abcd")),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource",
+						tb.From("somepipeline-build-somebuild-stage-stage4-abcd"))),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+				tb.PipelineDeclaredResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage))),
+			tasks: []*pipelinev1alpha1.Task{
+				tb.Task("somepipeline-build-somebuild-stage-stage1-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+							tb.ResourceTargetPath("workspace")),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.Step("stage-stage1-step-0-abcd", "some-image", tb.Command("ls")),
+				)),
+				tb.Task("somepipeline-build-somebuild-stage-stage3-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.Step("stage-stage3-step-0-abcd", "some-image", tb.Command("ls")),
+				)),
+				tb.Task("somepipeline-build-somebuild-stage-stage4-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.Step("stage-stage4-step-0-abcd", "some-image", tb.Command("ls")),
+				)),
+				tb.Task("somepipeline-build-somebuild-stage-stage5-abcd", "somenamespace", tb.TaskSpec(
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.Step("stage-stage5-step-0-abcd", "some-image", tb.Command("ls")),
+				)),
+			},
+		},
+		{
 			name: "environment_at_top_and_in_stage",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
