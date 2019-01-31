@@ -860,7 +860,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			},
 		},
 		{
-			name: "stage timeout",
+			name: "stage_timeout",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -884,20 +884,25 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			},
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
 				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
-					tb.PipelineTaskInputResource("workspace", "common-workspace")),
-				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
+					tb.PipelineTaskInputResource("workspace", "common-workspace"),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource")),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+				tb.PipelineDeclaredResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
 					tb.TaskTimeout(50*time.Minute),
-					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
-						tb.ResourceTargetPath("workspace"))),
-					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+							tb.ResourceTargetPath("workspace")),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
 					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
 				)),
 			},
 		},
 		{
-			name: "top-level timeout",
+			name: "top_level_timeout",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -920,13 +925,18 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			pipeline: tb.Pipeline("somepipeline-build-somebuild-abcd", "somenamespace", tb.PipelineSpec(
 				tb.PipelineTimeout(&metav1.Duration{Duration: 50*time.Minute}),
 				tb.PipelineTask("a-working-stage", "somepipeline-build-somebuild-stage-a-working-stage-abcd",
-					tb.PipelineTaskInputResource("workspace", "common-workspace")),
-				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit))),
+					tb.PipelineTaskInputResource("workspace", "common-workspace"),
+					tb.PipelineTaskInputResource("temp-ordering-resource", "temp-ordering-resource")),
+				tb.PipelineDeclaredResource("common-workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+				tb.PipelineDeclaredResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage))),
 			tasks: []*pipelinev1alpha1.Task{
 				tb.Task("somepipeline-build-somebuild-stage-a-working-stage-abcd", "somenamespace", tb.TaskSpec(
-					tb.TaskInputs(tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
-						tb.ResourceTargetPath("workspace"))),
-					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit)),
+					tb.TaskInputs(
+						tb.InputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit,
+							tb.ResourceTargetPath("workspace")),
+						tb.InputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
+					tb.TaskOutputs(tb.OutputsResource("workspace", pipelinev1alpha1.PipelineResourceTypeGit),
+						tb.OutputsResource("temp-ordering-resource", pipelinev1alpha1.PipelineResourceTypeImage)),
 					tb.Step("stage-a-working-stage-step-0-abcd", "some-image", tb.Command("echo"), tb.Args("hello", "world")),
 				)),
 			},
