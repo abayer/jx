@@ -1,0 +1,8 @@
+apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: A Working Stage
+    steps:
+      - step: some-step
+        args: ['some', 'args']

@@ -1,0 +1,5 @@
+apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: A Broken Stage

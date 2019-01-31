@@ -1,0 +1,12 @@
+apiVersion: v0.1
+agent:
+  image: some-image
+stages:
+  - name: A Working Stage
+    options:
+      retry: -5
+    steps:
+      - command: echo
+        args:
+          - hello
+          - world
