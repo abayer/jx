@@ -5,33 +5,22 @@ import (
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/knative/build-pipeline/test/builder"
 	"github.com/knative/pkg/apis"
+	"io/ioutil"
 	"testing"
 )
 
-// TODO: Probably move the YAML to external files, like in Declarative's tests, and write a builder for generating the
-// expected objects. Because as this is now, there are way too many lines here.
+// TODO: Write a builder for generating the expected objects. Because
+// as this is now, there are way too many lines here.
 func TestParseJenkinsfileYaml(t *testing.T) {
 	tests := []struct {
 		name             string
-		yaml             string
 		expected         *Jenkinsfile
 		pipeline         *pipelinev1alpha1.Pipeline
 		tasks            []*pipelinev1alpha1.Task
 		expectedErrorMsg string
 	}{
 		{
-			name: "simple jenkinsfile",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
+			name: "simple_jenkinsfile",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -59,22 +48,7 @@ stages:
 			},
 		},
 		{
-			name: "multiple stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-  - name: Another stage
-    steps:
-      - command: echo
-        args: ['again']
-`,
+			name: "multiple_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -118,24 +92,7 @@ stages:
 			},
 		},
 		{
-			name: "nested stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: Parent Stage
-    stages:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Another stage
-        steps:
-          - command: echo
-            args: ['again']
-`,
+			name: "nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -184,32 +141,7 @@ stages:
 			},
 		},
 		{
-			name: "parallel stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: First Stage
-    steps:
-      - command: echo
-        args: ['first']
-  - name: Parent Stage
-    parallel:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Another stage
-        steps:
-          - command: echo
-            args: ['again']
-  - name: Last Stage
-    steps:
-      - command: echo
-        args: ['last']
-`,
+			name: "parallel_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -288,38 +220,7 @@ stages:
 			},
 		},
 		{
-			name: "parallel and nestedstages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: First Stage
-    steps:
-      - command: echo
-        args: ['first']
-  - name: Parent Stage
-    parallel:
-      - name: A Working Stage
-        steps:
-          - command: echo
-            args:
-              - hello
-              - world
-      - name: Nested In Parallel
-        stages:
-          - name: Another stage
-            steps:
-              - command: echo
-                args: ['again']
-          - name: Some other stage
-            steps:
-              - command: echo
-                args: ['otherwise']
-  - name: Last Stage
-    steps:
-      - command: echo
-        args: ['last']
-`,
+			name: "parallel_and_nested_stages",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -417,22 +318,7 @@ stages:
 			},
 		},
 		{
-			name: "environment at top and in stage",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-environment:
-  - name: SOME_VAR
-    value: A value for the env var
-stages:
-  - name: A stage with environment
-    environment:
-        - name: SOME_OTHER_VAR
-          value: A value for the other env var
-    steps:
-      - command: echo
-        args: ['hello', '${SOME_OTHER_VAR}']
-`,
+			name: "environment_at_top_and_in_stage",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -470,22 +356,7 @@ stages:
 			},
 		},
 		{
-			name: "syntactic sugar step and a command",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-      - step: "some-step"
-        options:
-          firstParam: "some value"
-          secondParam: "some other value"
-`,
+			name: "syntactic_sugar_step_and_a_command",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -512,36 +383,6 @@ stages:
 		},
 		{
 			name: "post",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-    post:
-      - condition: success
-        actions:
-          - name: mail
-            options:
-              to: foo@bar.com
-              subject: "Yay, it passed"
-      - condition: failure
-        actions:
-          - name: slack
-            options:
-              whatever: the
-              slack: config
-              actually: "is. =)"
-      - condition: always
-        actions:
-          - name: junit
-            options:
-              pattern: "target/surefire-reports/**/*.xml"
-`,
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -590,34 +431,7 @@ stages:
 			expectedErrorMsg: "post on stages not yet supported",
 		},
 		{
-			name: "top-level and stage options",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  timeout:
-    time: 50
-    unit: minutes
-  retry: 3
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        time: 5
-        unit: seconds
-      retry: 4
-      stash:
-        name: Some Files
-        files: "somedir/**/*"
-      unstash:
-        name: Earlier Files
-        dir: some/sub/dir
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
+			name: "top_level_and_stage_options",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -658,22 +472,7 @@ stages:
 			expectedErrorMsg: "options at top level not yet supported",
 		},
 		{
-			name: "stage and step agent",
-			yaml: `apiVersion: v0.1
-stages:
-  - name: A Working Stage
-    agent:
-      image: some-image
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-        agent:
-          image: some-other-image
-      - command: echo
-        args: ['goodbye']
-`,
+			name: "stage_and_step_agent",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Stages: []Stage{{
@@ -711,18 +510,7 @@ stages:
 			},
 		},
 		{
-			name: "mangled task names",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: . -a- .
-    steps:
-      - command: ls
-  - name: Wööh!!!! - This is cool.
-    steps:
-      - command: ls
-`,
+			name: "mangled_task_names",
 			expected: &Jenkinsfile{
 				APIVersion: "v0.1",
 				Agent: Agent{
@@ -769,7 +557,14 @@ stages:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parsed, err := ParseJenkinsfileYaml(tt.yaml)
+
+			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.name + ".yaml")
+			if err != nil {
+				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.name+".yaml")
+			}
+			tt.name = string(YamlToRead)
+
+			parsed, err := ParseJenkinsfileYaml(tt.name)
 			if err != nil {
 				t.Fatalf("Failed to parse YAML for %s: %q", tt.name, err)
 			}
@@ -806,6 +601,7 @@ stages:
 	}
 }
 
+// TODO: Externalize these too. Want to get this in to avoid merge conflicts later.
 func TestFailedValidation(t *testing.T) {
 	tests := []struct {
 		name          string
