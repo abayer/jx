@@ -989,177 +989,53 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 	}
 }
 
-// TODO: Externalize these too. Want to get this in to avoid merge conflicts later.
 func TestFailedValidation(t *testing.T) {
 	tests := []struct {
 		name          string
-		yaml          string
 		expectedError *apis.FieldError
 	}{
 		{
 			name: "bad_apiVersion",
-			yaml: `apiVersion: baaaad
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: &apis.FieldError{
 				Message: "Invalid apiVersion format: must be 'v(digits).(digits)",
 				Paths:   []string{"apiVersion"},
 			},
 		},
-		/* TODO: Once we figure out how to differentiate between an empty agent and no agent specified...
-				   {
-				   			name: "empty agent",
-				   			yaml: `apiVersion: v0.1
-				   agent:
-				   stages:
-				     - name: A Working Stage
-				       steps:
-				         - command: echo
-				           args:
-		          - hello
-		          - world
-				   `,
-				   			expectedError: &apis.FieldError{
-				   				Message: "Invalid apiVersion format: must be 'v(digits).(digits)",
-				   				Paths:   []string{"apiVersion"},
-				   			},
-				   		},
-		*/
 		{
 			name: "agent_with_both_image_and_label",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-  label: some-label
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
-			expectedError: apis.ErrMultipleOneOf("label", "image").ViaField("agent"),
+			expectedError: apis.ErrMultipleOneOf("label", "image").
+				ViaField("agent"),
 		},
 		{
-			name: "no_stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-`,
+			name:          "no_stages",
 			expectedError: apis.ErrMissingField("stages"),
 		},
 		{
-			name: "no_steps_stages_or_parallel",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Broken Stage
-`,
+			name:          "no_steps_stages_or_parallel",
 			expectedError: apis.ErrMissingOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "steps_and_stages",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Broken Stage
-    steps:
-      - command: echo
-        arguments: ["hello","world"]
-    stages:
-      - name: Nested
-        steps:
-          - command: echo
-            arguments: ['oops']
-`,
+			name:          "steps_and_stages",
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "steps_and_parallel",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Broken Stage
-    steps:
-      - command: echo
-        arguments: ["hello","world"]
-    parallel:
-      - name: Nested
-        steps:
-          - command: echo
-            arguments: ['oops']
-`,
+			name:          "steps_and_parallel",
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "stages_and_parallel",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Broken Stage
-    stages:
-      - name: Nested
-        steps:
-          - command: echo
-            arguments: ['oops']
-    parallel:
-      - name: Other Nested
-        steps:
-          - command: echo
-            arguments: again
-`,
+			name:          "stages_and_parallel",
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step_without_command_or_step",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - args: ['hello','world']
-`,
+			name:          "step_without_command_or_step",
 			expectedError: apis.ErrMissingOneOf("command", "step").ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step_with_both_command_and_step",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        step: some-step
-`,
+			name:          "step_with_both_command_and_step",
 			expectedError: apis.ErrMultipleOneOf("command", "step").ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
 			name: "step_with_command_and_options",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        options:
-          someOptions: someValue
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Cannot set options for a command",
 				Paths:   []string{"options"},
@@ -1167,15 +1043,6 @@ stages:
 		},
 		{
 			name: "step_with_step_and_arguments",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    steps:
-      - step: some-step
-        args: ['some', 'args']
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Cannot set command-line arguments for a step",
 				Paths:   []string{"args"},
@@ -1183,15 +1050,6 @@ stages:
 		},
 		{
 			name: "no_parent_or_stage_agent",
-			yaml: `apiVersion: v0.1
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "No agent specified for stage or for its parent(s)",
 				Paths:   []string{"agent"},
@@ -1199,20 +1057,6 @@ stages:
 		},
 		{
 			name: "top_level_timeout_without_time",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  timeout:
-    unit: seconds
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Timeout must be greater than zero",
 				Paths:   []string{"time"},
@@ -1220,20 +1064,6 @@ stages:
 		},
 		{
 			name: "stage_timeout_without_time",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        unit: seconds
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Timeout must be greater than zero",
 				Paths:   []string{"time"},
@@ -1241,21 +1071,6 @@ stages:
 		},
 		{
 			name: "top_level_timeout_with_invalid_unit",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  timeout:
-    time: 5
-    unit: years
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "years is not a valid time unit. Valid time units are seconds, minutes, hours, days",
 				Paths:   []string{"unit"},
@@ -1263,21 +1078,6 @@ stages:
 		},
 		{
 			name: "stage_timeout_with_invalid_unit",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        time: 5
-        unit: years
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "years is not a valid time unit. Valid time units are seconds, minutes, hours, days",
 				Paths:   []string{"unit"},
@@ -1285,21 +1085,6 @@ stages:
 		},
 		{
 			name: "top_level_timeout_with_invalid_time",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  timeout:
-    time: 0
-    unit: minutes
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Timeout must be greater than zero",
 				Paths:   []string{"time"},
@@ -1307,21 +1092,6 @@ stages:
 		},
 		{
 			name: "stage_timeout_with_invalid_time",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      timeout:
-        time: 0
-        unit: minutes
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Timeout must be greater than zero",
 				Paths:   []string{"time"},
@@ -1329,19 +1099,6 @@ stages:
 		},
 		{
 			name: "top_level_retry_with_invalid_count",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-options:
-  retry: -5
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Retry count cannot be negative",
 				Paths:   []string{"retry"},
@@ -1349,19 +1106,6 @@ stages:
 		},
 		{
 			name: "stage_retry_with_invalid_count",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      retry: -5
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Retry count cannot be negative",
 				Paths:   []string{"retry"},
@@ -1369,20 +1113,6 @@ stages:
 		},
 		{
 			name: "stash_without_name",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      stash:
-        files: "foo/**/*"
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "The stash name must be provided",
 				Paths:   []string{"name"},
@@ -1390,20 +1120,6 @@ stages:
 		},
 		{
 			name: "stash_without_files",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      stash:
-        name: a-stash
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "files to stash must be provided",
 				Paths:   []string{"files"},
@@ -1411,20 +1127,6 @@ stages:
 		},
 		{
 			name: "unstash_without_name",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: A Working Stage
-    options:
-      unstash:
-        dir: some/dir
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
-`,
 			expectedError: (&apis.FieldError{
 				Message: "The unstash name must be provided",
 				Paths:   []string{"name"},
@@ -1432,14 +1134,6 @@ stages:
 		},
 		{
 			name: "blank_stage_name",
-			yaml: `apiVersion: v0.1
-agent:
-  image: some-image
-stages:
-  - name: .-  ^ ö
-    steps:
-      - command: ls
-`,
 			expectedError: (&apis.FieldError{
 				Message: "Stage name must contain at least one ASCII letter",
 				Paths:   []string{"name"},
