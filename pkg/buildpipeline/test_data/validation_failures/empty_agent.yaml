@@ -7,4 +7,3 @@ apiVersion: v0.1
           args:
       - hello
       - world
-		
