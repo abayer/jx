@@ -997,7 +997,7 @@ func TestFailedValidation(t *testing.T) {
 		expectedError *apis.FieldError
 	}{
 		{
-			name: "bad apiVersion",
+			name: "bad_apiVersion",
 			yaml: `apiVersion: baaaad
 agent:
   image: some-image
@@ -1034,7 +1034,7 @@ stages:
 				   		},
 		*/
 		{
-			name: "agent with both image and label",
+			name: "agent_with_both_image_and_label",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1050,7 +1050,7 @@ stages:
 			expectedError: apis.ErrMultipleOneOf("label", "image").ViaField("agent"),
 		},
 		{
-			name: "no stages",
+			name: "no_stages",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1058,7 +1058,7 @@ agent:
 			expectedError: apis.ErrMissingField("stages"),
 		},
 		{
-			name: "no steps, stages, or parallel",
+			name: "no_steps_stages_or_parallel",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1068,7 +1068,7 @@ stages:
 			expectedError: apis.ErrMissingOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "steps and stages",
+			name: "steps_and_stages",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1086,7 +1086,7 @@ stages:
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "steps and parallel",
+			name: "steps_and_parallel",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1104,7 +1104,7 @@ stages:
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "stages and parallel",
+			name: "stages_and_parallel",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1124,7 +1124,7 @@ stages:
 			expectedError: apis.ErrMultipleOneOf("steps", "stages", "parallel").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step without command or step",
+			name: "step_without_command_or_step",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1136,7 +1136,7 @@ stages:
 			expectedError: apis.ErrMissingOneOf("command", "step").ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step with both command and step",
+			name: "step_with_both_command_and_step",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1149,7 +1149,7 @@ stages:
 			expectedError: apis.ErrMultipleOneOf("command", "step").ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step with command and options",
+			name: "step_with_command_and_options",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1166,7 +1166,7 @@ stages:
 			}).ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "step with step and arguments",
+			name: "step_with_step_and_arguments",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1182,7 +1182,7 @@ stages:
 			}).ViaFieldIndex("steps", 0).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "no parent or stage agent",
+			name: "no_parent_or_stage_agent",
 			yaml: `apiVersion: v0.1
 stages:
   - name: A Working Stage
@@ -1198,7 +1198,7 @@ stages:
 			}).ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "top level timeout without time",
+			name: "top_level_timeout_without_time",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1219,7 +1219,7 @@ stages:
 			}).ViaField("timeout").ViaField("options"),
 		},
 		{
-			name: "stage timeout without time",
+			name: "stage_timeout_without_time",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1240,7 +1240,7 @@ stages:
 			}).ViaField("timeout").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "top level timeout with invalid unit",
+			name: "top_level_timeout_with_invalid_unit",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1262,7 +1262,7 @@ stages:
 			}).ViaField("timeout").ViaField("options"),
 		},
 		{
-			name: "stage timeout with invalid unit",
+			name: "stage_timeout_with_invalid_unit",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1284,7 +1284,7 @@ stages:
 			}).ViaField("timeout").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "top level timeout with invalid time",
+			name: "top_level_timeout_with_invalid_time",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1306,7 +1306,7 @@ stages:
 			}).ViaField("timeout").ViaField("options"),
 		},
 		{
-			name: "stage timeout with invalid time",
+			name: "stage_timeout_with_invalid_time",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1328,7 +1328,7 @@ stages:
 			}).ViaField("timeout").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "top level retry with invalid count",
+			name: "top_level_retry_with_invalid_count",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1348,7 +1348,7 @@ stages:
 			}).ViaField("options"),
 		},
 		{
-			name: "stage retry with invalid count",
+			name: "stage_retry_with_invalid_count",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1368,7 +1368,7 @@ stages:
 			}).ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "stash without name",
+			name: "stash_without_name",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1389,7 +1389,7 @@ stages:
 			}).ViaField("stash").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "stash without files",
+			name: "stash_without_files",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1410,7 +1410,7 @@ stages:
 			}).ViaField("stash").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "unstash without name",
+			name: "unstash_without_name",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1431,7 +1431,7 @@ stages:
 			}).ViaField("unstash").ViaField("options").ViaFieldIndex("stages", 0),
 		},
 		{
-			name: "blank stage name",
+			name: "blank_stage_name",
 			yaml: `apiVersion: v0.1
 agent:
   image: some-image
@@ -1449,7 +1449,13 @@ stages:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parsed, parseErr := ParseJenkinsfileYaml(tt.yaml)
+			YamlToRead, YamlReadErr := ioutil.ReadFile("test_data/validation_failures/" + tt.name + ".yaml")
+			if YamlReadErr != nil {
+				t.Fatalf("Could not read yaml file: %s ", "test_data/validation_failures/"+tt.name+".yaml")
+			}
+			tt.name = string(YamlToRead)
+
+			parsed, parseErr := ParseJenkinsfileYaml(tt.name)
 			if parseErr != nil {
 				t.Fatalf("Failed to parse YAML for %s: %q", tt.name, parseErr)
 			}
