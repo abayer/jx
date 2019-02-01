@@ -408,12 +408,7 @@ github.com/imdario/mergo v0.3.5 h1:JboBksRwiiAJWvIYJVo46AfV+IAIKZpfrSzVKj42R4Q=
 github.com/imdario/mergo v0.3.5/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/imdario/mergo v0.3.6 h1:xTNEAn+kxVO7dTZGu0CegyqKZmoWFI0rF8UxjlB2d28=
 github.com/imdario/mergo v0.3.6/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
-<<<<<<< HEAD
 github.com/inconshreveable/mousetrap v0.0.0-20141017200713-76626ae9c91c/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
-=======
-github.com/imdario/mergo v0.3.7 h1:Y+UAYTZ7gDEuOfhxKWy+dvb5dRQ6rJjFSdX2HZY1/gI=
-github.com/imdario/mergo v0.3.7/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
->>>>>>> Update to build-pipeline supporting timeout, add top-level timeout test
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/influxdb v0.0.0-20161215172503-049f9b42e9a5/go.mod h1:qZna6X/4elxqT3yI9iZYdZrWWdeFOOprn86kgg4+IzY=
@@ -471,8 +466,8 @@ github.com/knative/build-pipeline v0.0.0-20190125190534-405702f93a25 h1:/pdYwA3T
 github.com/knative/build-pipeline v0.0.0-20190125190534-405702f93a25/go.mod h1:mfaenlZ8/tw23y+Pck3qWpCVNTPMiFSZ0uqQkscBEAI=
 github.com/knative/build-pipeline v0.0.0-20190127035435-3b5fe38dbd3d h1:Oprlt+k5bg1iP3Qgj8whGlebonRUeuCRUeoNxzWuVv4=
 github.com/knative/build-pipeline v0.0.0-20190127035435-3b5fe38dbd3d/go.mod h1:mfaenlZ8/tw23y+Pck3qWpCVNTPMiFSZ0uqQkscBEAI=
-github.com/knative/build-pipeline v0.0.0-20190130204537-23a2b9114741 h1:C/oGb3D0iTOn1Qnkr7jOSE/oRXgOq27kqLXGD0CHCZw=
-github.com/knative/build-pipeline v0.0.0-20190130204537-23a2b9114741/go.mod h1:mfaenlZ8/tw23y+Pck3qWpCVNTPMiFSZ0uqQkscBEAI=
+github.com/knative/build-pipeline v0.0.0-20190131183337-3cd318b51868 h1:L2PJOvstlcqXfhUFaIeIDO1cscumyabppnpymFn5wrk=
+github.com/knative/build-pipeline v0.0.0-20190131183337-3cd318b51868/go.mod h1:mfaenlZ8/tw23y+Pck3qWpCVNTPMiFSZ0uqQkscBEAI=
 github.com/knative/caching v0.0.0-20180907165633-f0d7bb60956f/go.mod h1:D6ynAUa79yFRVWCEogSqhRRNi2SooyDBf1ucp02CFKg=
 github.com/knative/pkg v0.0.0-20181205230426-0e41760cea1d/go.mod h1:7Ijfhw7rfB+H9VtosIsDYvZQ+qYTz7auK3fHW/5z4ww=
 github.com/knative/pkg v0.0.0-20190118011331-076ebf4e5675/go.mod h1:7Ijfhw7rfB+H9VtosIsDYvZQ+qYTz7auK3fHW/5z4ww=
@@ -552,10 +547,7 @@ github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 h1:Esafd1046DLD
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
-<<<<<<< HEAD
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
-=======
->>>>>>> Update to build-pipeline supporting timeout, add top-level timeout test
 github.com/nlopes/slack v0.0.0-20180721202243-347a74b1ea30 h1:VFJCzi0gMjfS+UmnSoP+sW4KzVw9V++txUHRWgw3hEo=
 github.com/nlopes/slack v0.0.0-20180721202243-347a74b1ea30/go.mod h1:jVI4BBK3lSktibKahxBF74txcK2vyvkza1z/+rRnVAM=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
@@ -824,6 +816,7 @@ google.golang.org/api v0.0.0-20181017004218-3f6e8463aa1d h1:oaIeWl/4IkZN1PMjqNOf
 google.golang.org/api v0.0.0-20181017004218-3f6e8463aa1d/go.mod h1:4mhQ8q/RsB7i+udVvVy5NUi08OU8ZlA0gRVgrF7VFY0=
 google.golang.org/api v0.0.0-20181021000519-a2651947f503 h1:UK7/bFlIoP9xre0fwSiXFaZZSpzmaen5MKp1sppNJ9U=
 google.golang.org/api v0.0.0-20181021000519-a2651947f503/go.mod h1:4mhQ8q/RsB7i+udVvVy5NUi08OU8ZlA0gRVgrF7VFY0=
+google.golang.org/api v0.1.0 h1:K6z2u68e86TPdSdefXdzvXgR1zEMa+459vBSfWYAZkI=
 google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9YwlJXL52JkM=
 google.golang.org/appengine v1.2.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.3.0 h1:FBSsiFRMz3LBeXIomRnVzrQwSDj4ibvcRexLG0LZGQk=
