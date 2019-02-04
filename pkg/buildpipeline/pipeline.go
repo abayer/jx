@@ -181,6 +181,7 @@ func (s *Stage) TaskName() string {
 // cf. https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 // body is assumed to have at least one ASCII letter.
 // suffix is assumed to be alphanumeric and non-empty.
+// TODO: Combine with kube.ToValidName (that function needs to handle lengths)
 func MangleToRfc1035Label(body string, suffix string) string {
 	const MAX_LABEL_LENGTH = 63
 	MAX_BODY_LENGTH := MAX_LABEL_LENGTH - len(suffix) - 1 // Add an extra hyphen before the suffix
