@@ -2,6 +2,7 @@ package buildpipeline
 
 import (
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -995,10 +996,10 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			YamlToRead, err := ioutil.ReadFile("test_data/" + tt.name + ".yaml")
+			yamlFileName := filepath.Join("test_data", tt.name+".yaml")
+			YamlToRead, err := ioutil.ReadFile(yamlFileName)
 			if err != nil {
-				t.Fatalf("Could not read yaml file: %s ", "test_data/"+tt.name+".yaml")
+				t.Fatalf("Could not read yaml file: %s ", yamlFileName)
 			}
 			tt.name = string(YamlToRead)
 
@@ -1214,9 +1215,10 @@ func TestFailedValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			YamlToRead, YamlReadErr := ioutil.ReadFile("test_data/validation_failures/" + tt.name + ".yaml")
+			yamlFile := filepath.Join("test_data", "validation_failures", tt.name+".yaml")
+			YamlToRead, YamlReadErr := ioutil.ReadFile(yamlFile)
 			if YamlReadErr != nil {
-				t.Fatalf("Could not read yaml file: %s ", "test_data/validation_failures/"+tt.name+".yaml")
+				t.Fatalf("Could not read yaml file: %s ", yamlFile)
 			}
 			tt.name = string(YamlToRead)
 
