@@ -603,18 +603,11 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		return nil, errors.New("post on stages not yet supported")
 	}
 
-	duration := &metav1.Duration{}
-
 	if !equality.Semantic.DeepEqual(s.Options, StageOptions{}) {
 		o := s.Options
 		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
-			if d, err := o.Timeout.ToDuration(); err != nil {
-				return nil, err
-			} else {
-				duration = d
-			}
+			return nil, errors.New("Timeout on stage not yet supported")
 		}
-
 		if o.Retry != 0 {
 			return nil, errors.New("Retry on stage not yet supported")
 		}
@@ -659,10 +652,6 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 
 		if wsPath != "" {
 			ws.TargetPath = wsPath
-		}
-
-		if !equality.Semantic.DeepEqual(duration, &metav1.Duration{}) {
-			t.Spec.Timeout = duration
 		}
 
 		t.Spec.Inputs = &pipelinev1alpha1.Inputs{
@@ -764,17 +753,8 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 		return nil, nil, errors.New("post at top level not yet supported")
 	}
 
-	duration := &metav1.Duration{}
-
 	if !equality.Semantic.DeepEqual(j.Options, RootOptions{}) {
 		o := j.Options
-		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
-			if d, err := o.Timeout.ToDuration(); err != nil {
-				return nil, nil, err
-			} else {
-				duration = d
-			}
-		}
 		if o.Retry != 0 {
 			return nil, nil, errors.New("Retry at top level not yet supported")
 		}
@@ -812,9 +792,6 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 	p.SetDefaults()
 
 	var previousStage *TransformedStage
-	if !equality.Semantic.DeepEqual(duration, &metav1.Duration{}) {
-		p.Spec.Timeout = duration
-	}
 
 	var tasks []*pipelinev1alpha1.Task
 
@@ -862,7 +839,7 @@ func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTas
 		_, provider := findWorkspaceProvider(stage, stage.getEnclosing(0))
 		var previousStageNames []string
 		for _, previousStage := range findPreviousNonBlockStages(*stage) {
-			previousStageNames = append(previousStageNames, previousStage.Task.Name)
+			previousStageNames = append(previousStageNames, previousStage.PipelineTask.Name)
 		}
 		pTask.Resources = &pipelinev1alpha1.PipelineTaskResources{
 			Inputs: []pipelinev1alpha1.PipelineTaskInputResource{
@@ -876,6 +853,17 @@ func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTas
 					Name:     "temp-ordering-resource",
 					Resource: "temp-ordering-resource",
 					From:     previousStageNames,
+				},
+			},
+			Outputs: []pipelinev1alpha1.PipelineTaskOutputResource{
+				{
+					Name:     "workspace",
+					Resource: "common-workspace",
+				},
+				{
+					// TODO: Switch from this kind of hackish approach to non-resource-based dependencies once they land.
+					Name:     "temp-ordering-resource",
+					Resource: "temp-ordering-resource",
 				},
 			},
 		}
@@ -916,7 +904,7 @@ func findWorkspaceProvider(stage, sibling *TransformedStage) (bool, []string) {
 			// Allow them if only one of the parallel tasks uses the same resource?
 		} else if sibling.PipelineTask != nil {
 			if *sibling.Stage.Options.Workspace == *stage.Stage.Options.Workspace {
-				return true, []string{sibling.Task.Name}
+				return true, []string{sibling.PipelineTask.Name}
 			}
 		} else {
 			// We are in a sequential stage and sibling has not had its PipelineTask created.
