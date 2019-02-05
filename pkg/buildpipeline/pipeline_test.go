@@ -9,6 +9,7 @@ import (
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/knative/build-pipeline/test/builder"
 	"github.com/knative/pkg/apis"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TODO: Write a builder for generating the expected objects. Because
@@ -1030,6 +1031,7 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			}
 
 			if tt.expectedErrorMsg == "" {
+				pipeline.TypeMeta = metav1.TypeMeta{}
 				if d := cmp.Diff(tt.pipeline, pipeline); d != "" {
 					t.Errorf("Generated Pipeline did not match expected: %s", d)
 				}
@@ -1038,6 +1040,9 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 					t.Errorf("PipelineSpec.Validate() = %v", err)
 				}
 
+				for _, task := range tasks {
+					task.TypeMeta = metav1.TypeMeta{}
+				}
 				if d := cmp.Diff(tt.tasks, tasks); d != "" {
 					t.Errorf("Generated Tasks did not match expected: %s", d)
 				}

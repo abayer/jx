@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/jenkins-x/jx/pkg/kpipelines"
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/knative/pkg/apis"
 	"github.com/pkg/errors"
@@ -639,6 +640,10 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		}
 
 		t := &pipelinev1alpha1.Task{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: kpipelines.PipelineAPIVersion,
+				Kind:       "Task",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
 				Name:      MangleToRfc1035Label(fmt.Sprintf("%s-build-%s-stage-%s", pipelineIdentifier, buildIdentifier, s.Name), suffix),
@@ -771,6 +776,10 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 	}
 
 	p := &pipelinev1alpha1.Pipeline{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kpipelines.PipelineAPIVersion,
+			Kind:       "Pipeline",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      fmt.Sprintf("%s-build-%s-%s", pipelineIdentifier, buildIdentifier, suffix),
