@@ -98,6 +98,8 @@ func CreatePipelineRun(knativePipelineClient kpipelineclient.Interface, ns strin
 	buildNumber := GetLastBuildNumber(pipeline)
 	answer := run
 
+	log.Warnf("PIPELINERUN: %+v", run)
+
 	f := func() error {
 		buildNumber++
 		buildNumberText := strconv.Itoa(buildNumber)
