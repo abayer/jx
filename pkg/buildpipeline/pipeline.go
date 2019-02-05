@@ -408,7 +408,7 @@ func findDuplicates(names []string) *apis.FieldError {
 	}
 }
 
-func deep(stages []Stage, stageNames []string, errors *[]apis.FieldError) {
+func validateStageNames(stages []Stage, stageNames []string, errors *[]apis.FieldError) {
 	childrenToExpand := []Stage{}
 
 	for _, stage := range stages {
@@ -419,7 +419,7 @@ func deep(stages []Stage, stageNames []string, errors *[]apis.FieldError) {
 	}
 
 	for _, child := range childrenToExpand {
-		deep(child.Stages, stageNames, errors)
+		validateStageNames(child.Stages, stageNames, errors)
 
 	}
 

@@ -1396,7 +1396,7 @@ func TestFindDuplicatesWithStages (t *testing.T){
 			names := []string{}
 			errors := []apis.FieldError{}
 
-			deep(parsed.Stages, names, &errors)
+			validateStageNames(parsed.Stages, names, &errors)
 
 
 			if tt.errors != len(errors) {
