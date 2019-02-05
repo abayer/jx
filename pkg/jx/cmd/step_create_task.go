@@ -68,7 +68,7 @@ type StepCreateTaskOptions struct {
 	DeleteTempDir  bool
 	ViewSteps      bool
 	Duration       time.Duration
-	FromYaml       bool
+	FromRepo       bool
 
 	PodTemplates        map[string]*corev1.Pod
 	MissingPodTemplates map[string]bool
@@ -135,7 +135,7 @@ func NewCmdStepCreateTask(f Factory, in terminal.FileReader, out terminal.FileWr
 	cmd.Flags().BoolVarP(&options.NoApply, "no-apply", "", false, "Disables creating the Pipeline resources in the kubernetes cluster and just outputs the generated Task to the console or output file")
 	cmd.Flags().BoolVarP(&options.ViewSteps, "view", "", false, "Just view the steps that would be created")
 	cmd.Flags().DurationVarP(&options.Duration, "duration", "", time.Second*30, "Retry duration when trying to create a PipelineRun")
-	cmd.Flags().BoolVarP(&options.FromYaml, "from-yaml", "", false, "Bypass build pack stuff and use jenkins-x.yaml to generate the Pipeline")
+	cmd.Flags().BoolVarP(&options.FromRepo, "from-repo", "", false, "Use jenkins-x.yaml to generate the Pipeline instead of using build packs")
 	return cmd
 }
 
@@ -182,7 +182,7 @@ func (o *StepCreateTaskOptions) Run() error {
 	// application of those CRDs to the cluster. Step 2 should be identical both
 	// cases, so we'd just need a flag to switch the single function that is used
 	// to generate stuff and then everything else would be identical.
-	if !o.FromYaml {
+	if !o.FromRepo {
 		if o.BuildPackURL == "" || o.BuildPackRef == "" {
 			if o.BuildPackURL == "" {
 				o.BuildPackURL = settings.BuildPackURL
