@@ -606,7 +606,8 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 		pipeline.Kind = "Pipeline"
 	}
 	log.Warnf("PIPELINE KIND AND APIVERSION: '%s' '%s'", pipeline.Kind, pipeline.APIVersion)
-	_, err = kpipelines.CreateOrUpdatePipeline(kpClient, ns, pipeline, o.labels)
+	originalPipeline := pipeline
+	pipeline, err = kpipelines.CreateOrUpdatePipeline(kpClient, ns, pipeline, o.labels)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create/update the Pipeline in namespace %s", ns)
 	}
@@ -622,8 +623,8 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 			Labels: util.MergeMaps(o.labels),
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion: pipeline.APIVersion,
-					Kind:       pipeline.Kind,
+					APIVersion: originalPipeline.APIVersion,
+					Kind:       originalPipeline.Kind,
 					Name:       pipeline.Name,
 					UID:        pipeline.UID,
 				},
@@ -636,7 +637,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 			},
 			PipelineRef: pipelineapi.PipelineRef{
 				Name:       pipeline.Name,
-				APIVersion: pipeline.APIVersion,
+				APIVersion: originalPipeline.APIVersion,
 			},
 			Resources: resourceBindings,
 		},
