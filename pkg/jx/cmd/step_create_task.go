@@ -610,7 +610,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 		return errors.Wrapf(err, "failed to create/update the Pipeline in namespace %s", ns)
 	}
 	log.Infof("upserted Pipeline %s\n", info(pipeline.Name))
-
+	log.Warnf("PIPELINE KIND AND APIVERSION: %s %s", pipeline.Kind, pipeline.APIVersion)
 	run := &pipelineapi.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "pipeline.knative.dev/v1alpha1",
