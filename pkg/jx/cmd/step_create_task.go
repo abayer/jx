@@ -606,7 +606,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 		pipeline.Kind = "Pipeline"
 	}
 	log.Warnf("PIPELINE KIND AND APIVERSION: '%s' '%s'", pipeline.Kind, pipeline.APIVersion)
-	pipeline, err = kpipelines.CreateOrUpdatePipeline(kpClient, ns, pipeline, o.labels)
+	_, err = kpipelines.CreateOrUpdatePipeline(kpClient, ns, pipeline, o.labels)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create/update the Pipeline in namespace %s", ns)
 	}
