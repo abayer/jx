@@ -1,8 +1,0 @@
-apiVersion: v0.1
-stages:
-  - name: A Working Stage
-    steps:
-      - command: echo
-        args:
-          - hello
-          - world
