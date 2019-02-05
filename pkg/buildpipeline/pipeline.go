@@ -381,6 +381,59 @@ func validateStep(s Step) *apis.FieldError {
 	return validateAgent(s.Agent).ViaField("agent")
 }
 
+func findDuplicates(names []string) *apis.FieldError {
+	// Count members
+	counts := make(map[string]int)
+	for _, v := range names {
+		counts[v]++
+	}
+
+	var errors []string
+
+	for k, v := range counts {
+		//println( "Counts", k, " -> ", v )
+		if v > 1 {
+			errors = append( errors, "Duplicate stage name '" + k + "'")
+		}
+	}
+
+	if len(errors) > 0 {
+		return &apis.FieldError{
+			Message:  fmt.Sprintf("%d duplicates in stage names", len(errors) ),
+			Paths:   errors,
+		}
+
+	}else {
+		return nil
+	}
+}
+
+func deep(stages []Stage, stageNames []string, errors *[]apis.FieldError) {
+	childrenToExpand := []Stage{}
+
+	for _, stage := range stages {
+		stageNames = append(stageNames, stage.Name)
+		if len(stage.Stages) > 0{
+			childrenToExpand = append(childrenToExpand, stage)
+		}
+	}
+
+	for _, child := range childrenToExpand {
+		deep(child.Stages, stageNames, errors)
+
+	}
+
+	if len(childrenToExpand) == 0 {
+		err := findDuplicates(stageNames)
+		if err != nil {
+			//fmt.Println("Error: ", err.Message, " in ", err.Paths )
+			*errors = append(*errors, *err)
+			//fmt.Println("Check: ", errors)
+		}
+	}
+}
+
+
 func validateStages(stages []Stage, parentAgent Agent) *apis.FieldError {
 	if len(stages) == 0 {
 		return apis.ErrMissingField("stages")

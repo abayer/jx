@@ -1,6 +1,7 @@
 package buildpipeline
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -1315,3 +1316,137 @@ func TestRfc1035LabelMangling(t *testing.T) {
 		})
 	}
 }
+
+func testFindDuplicates(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		input    []string
+		errors   int
+	}{
+		{
+			name:     "Two stage name duplicated" ,
+			input:    []string{"Stage 1","Stage 1","Stage 2","Stage 2",},
+			errors:  2,
+		},{
+			name:     "One stage name duplicated" ,
+			input:    []string{"Stage 1","Stage 1",},
+			errors:  1,
+		},{
+			name:     "No stage name duplicated" ,
+			input:    []string{"Stage 0","Stage 1","Stage 2","Stage 3",},
+			errors:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := findDuplicates( tt.input )
+
+			if tt.errors == 0 && err != nil {
+				t.Fatal("Not all duplicates found A")
+			}
+
+			if tt.errors > 0 && len( err.Paths ) != tt.errors {
+				t.Fatal("Not all duplicates found")
+			}
+
+
+		})
+	}
+}
+
+func TestFindDuplicatesWithStages (t *testing.T){
+	tests := []struct {
+		name     string
+		input    []string
+		errors   int
+	}{
+		{
+			name:     "stages_names_ok.yaml" ,
+			input:    []string{"Stage 0","Stage 1","Stage 2","Stage 3",},
+			errors:  0,
+		},
+		{
+			name:     "stages_names_duplicates.yaml" ,
+			input:    []string{"Stage 0","Stage 1","Stage 2","Stage 3",},
+			errors:  1,
+		},
+		{
+			name:     "stages_names_with_sub_stages.yaml" ,
+			input:    []string{"Stage 0","Stage 1","Stage 2","Stage 3",},
+			errors:  2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			println("Init")
+			fileName := "test_data/" + tt.name
+			file, err := ioutil.ReadFile( fileName)
+
+			if err != nil {
+				println("ERROR: Couldn't read file ", fileName, " with error ",err)
+			}
+
+			yaml := string(file)
+			parsed, _ := ParseJenkinsfileYaml(yaml)
+
+			names := []string{}
+			errors := []apis.FieldError{}
+
+			deep(parsed.Stages, names, &errors)
+
+
+			if tt.errors != len(errors) {
+				t.Fatal("Not all errors found " , tt.errors ,":" ,len(errors))
+			}
+
+
+
+
+			fmt.Println("end")
+		})
+	}
+}
+
+
+//func testPipelineWithTwoStages(t *testing.T) {
+//	fmt.Println("Hola")
+//	yaml := `apiVersion: 0.1
+//agent:
+//  image: some-image
+//stages:
+//  - name: A Working Title
+//    stage:
+//      - name: Stage 1
+//        steps:
+//          - command: echo
+//            args:
+//              - hello
+//              - buddy 1
+//  - name: A Working Title
+//    stage:
+//      - name: Stage 2
+//        steps:
+//          - command: echo
+//            args:
+//              - hello
+//              - buddy 2
+//`
+//
+//	parsed, error := ParseJenkinsfileYaml(yaml)
+//	if error != nil {
+//		fmt.Println("error ", error)
+//	}
+//	err := validateStageNames(parsed)
+//
+//	//println("Error ", err)
+//	if err != nil {
+//		println("Error ", err)
+//	}
+//
+//
+//	fmt.Println("Adios")
+//}
