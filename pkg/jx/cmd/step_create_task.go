@@ -203,6 +203,7 @@ func (o *StepCreateTaskOptions) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to load project config in dir %s", o.Dir)
 	}
+	log.Warnf("projectConfig: %+v", projectConfig)
 	if o.Pack == "" {
 		o.Pack = projectConfig.BuildPack
 	}
@@ -322,6 +323,7 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 		return err
 	}
 
+	log.Warnf("lifecycles: %+v", lifecycles)
 	// If there's an explicitly specified Pipeline in the lifecycle, use that.
 	if lifecycles.Pipeline != nil {
 		// TODO: Seeing weird behavior seemingly related to https://golang.org/doc/faq#nil_error
