@@ -556,6 +556,8 @@ func ExtendPipelines(parent *PipelineLifecycles, base *PipelineLifecycles) *Pipe
 		Build:      ExtendLifecycle(parent.Build, base.Build),
 		PostBuild:  ExtendLifecycle(parent.PostBuild, base.PostBuild),
 		Promote:    ExtendLifecycle(parent.Promote, base.Promote),
+		// TODO: Actually do extension for Pipeline rather than just copying it wholesale
+		Pipeline: parent.Pipeline,
 	}
 }
 

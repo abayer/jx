@@ -4,23 +4,25 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/jenkins-x/jx/pkg/kpipelines"
+	"io"
+	"io/ioutil"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/jenkins-x/jx/pkg/log"
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/knative/pkg/apis"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
-	PipelineFileName = "jenkins-x.yaml"
+	defaultContainerName = "maven"
 )
 
 type Jenkinsfile struct {
@@ -220,9 +222,10 @@ func MangleToRfc1035Label(body string, suffix string) string {
 		}
 	}
 
-	sb.WriteRune('-')
-	sb.WriteString(suffix)
-
+	if suffix != "" {
+		sb.WriteRune('-')
+		sb.WriteString(suffix)
+	}
 	return sb.String()
 }
 
@@ -575,7 +578,7 @@ func (ts *TransformedStage) computeWorkspace(parentWorkspace string) {
 	}
 }
 
-func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, parentWorkspace string, suffix string, depth int8, enclosingStage *TransformedStage, previousSiblingStage *TransformedStage) (*TransformedStage, error) {
+func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, namespace string, wsPath string, parentEnv []corev1.EnvVar, parentAgent Agent, parentWorkspace string, suffix string, depth int8, enclosingStage *TransformedStage, previousSiblingStage *TransformedStage, podTemplates map[string]*corev1.Pod) (*TransformedStage, error) {
 	if len(s.Post) != 0 {
 		return nil, errors.New("post on stages not yet supported")
 	}
@@ -604,6 +607,8 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		agent = parentAgent
 	}
 
+	stepCounter := 0
+
 	if len(s.Steps) > 0 {
 		if suffix == "" {
 			// Generate a short random hex string.
@@ -616,12 +621,12 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 
 		t := &pipelinev1alpha1.Task{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: kpipelines.PipelineAPIVersion,
+				APIVersion: PipelineAPIVersion,
 				Kind:       "Task",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace,
-				Name:      MangleToRfc1035Label(fmt.Sprintf("%s-build-%s-stage-%s", pipelineIdentifier, buildIdentifier, s.Name), suffix),
+				Name:      MangleToRfc1035Label(fmt.Sprintf("%s-%s", pipelineIdentifier, s.Name), ""),
 			},
 		}
 		t.SetDefaults()
@@ -657,20 +662,55 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			},
 		}
 
-		for i, step := range s.Steps {
+		for _, step := range s.Steps {
 			// TODO: Ignoring everything but commands right now, but will eventually need to handle syntactic sugar steps too
 			if step.Command != "" {
 				stepImage := agent.Image
 				if !equality.Semantic.DeepEqual(step.Agent, Agent{}) {
 					stepImage = step.Agent.Image
 				}
-				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
+
+				if stepImage == "" {
+					stepImage = defaultContainerName
+					log.Warnf("No 'image' specified in the pipeline configuration so defaulting to use: %s\n", stepImage)
+				}
+
+				var c corev1.Container
+
+				if podTemplates != nil {
+					podTemplate := podTemplates[stepImage]
+					if podTemplate == nil {
+						log.Warnf("Could not find a pod template for image %s\n", stepImage)
+						podTemplate = podTemplates[defaultContainerName]
+					}
+					containers := podTemplate.Spec.Containers
+					t.Spec.Volumes = append(t.Spec.Volumes, podTemplate.Spec.Volumes...)
+					c = containers[0]
+					c.Args = append([]string{step.Command}, step.Arguments...)
+				} else {
+					c = corev1.Container{
+						Image:   stepImage,
+						Command: []string{step.Command},
+						Args:    step.Arguments,
+					}
+				}
+				stepCounter++
+				c.Name = "step" + strconv.Itoa(1+stepCounter)
+
+				c.Stdin = false
+				c.TTY = false
+
+				c.Env = env
+
+				t.Spec.Steps = append(t.Spec.Steps, c)
+
+/*				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
 					Name:    MangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
 					Env:     env,
 					Image:   stepImage,
 					Command: []string{step.Command},
 					Args:    step.Arguments,
-				})
+				})*/
 			} else {
 				return nil, errors.New("syntactic sugar steps not yet supported")
 			}
@@ -694,7 +734,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			if i > 0 {
 				nestedPreviousSibling = tasks[i-1]
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nestedPreviousSibling)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nestedPreviousSibling, podTemplates)
 			if err != nil {
 				return nil, err
 			}
@@ -715,7 +755,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			if wsPath != "" && i == 0 {
 				nestedWsPath = wsPath
 			}
-			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nil)
+			nestedTask, err := stageToTask(nested, pipelineIdentifier, buildIdentifier, namespace, nestedWsPath, env, agent, *ts.Stage.Options.Workspace, suffix, depth+1, &ts, nil, podTemplates)
 			if err != nil {
 				return nil, err
 			}
@@ -729,7 +769,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 	return nil, errors.New("no steps, sequential stages, or parallel stages")
 }
 
-func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier string, namespace string, suffix string) (*pipelinev1alpha1.Pipeline, []*pipelinev1alpha1.Task, error) {
+func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier string, namespace string, suffix string, podTemplates map[string]*corev1.Pod) (*pipelinev1alpha1.Pipeline, []*pipelinev1alpha1.Task, error) {
 	if len(j.Post) != 0 {
 		return nil, nil, errors.New("post at top level not yet supported")
 	}
@@ -752,17 +792,17 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 
 	p := &pipelinev1alpha1.Pipeline{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: kpipelines.PipelineAPIVersion,
+			APIVersion: PipelineAPIVersion,
 			Kind:       "Pipeline",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
-			Name:      fmt.Sprintf("%s-build-%s-%s", pipelineIdentifier, buildIdentifier, suffix),
+			Name:      fmt.Sprintf("%s", pipelineIdentifier),
 		},
 		Spec: pipelinev1alpha1.PipelineSpec{
 			Resources: []pipelinev1alpha1.PipelineDeclaredResource{
 				{
-					Name: "common-workspace",
+					Name: pipelineIdentifier,
 					Type: pipelinev1alpha1.PipelineResourceTypeGit,
 				},
 				{
@@ -787,30 +827,30 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 		if len(tasks) == 0 {
 			wsPath = "workspace"
 		}
-		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, "default", suffix, 0, nil, previousStage)
+		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, "default", suffix, 0, nil, previousStage, podTemplates)
 		if err != nil {
 			return nil, nil, err
 		}
 		previousStage = stage
 
 		tasks = append(tasks, stage.getLinearTasks()...)
-		p.Spec.Tasks = append(p.Spec.Tasks, createPipelineTasks(stage)...)
+		p.Spec.Tasks = append(p.Spec.Tasks, createPipelineTasks(stage, pipelineIdentifier)...)
 	}
 
 	return p, tasks, nil
 }
 
-func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTask {
+func createPipelineTasks(stage *TransformedStage, pipelineIdentifier string) []pipelinev1alpha1.PipelineTask {
 	if stage.isSequential() {
 		var pTasks []pipelinev1alpha1.PipelineTask
 		for _, nestedStage := range stage.Sequential {
-			pTasks = append(pTasks, createPipelineTasks(nestedStage)...)
+			pTasks = append(pTasks, createPipelineTasks(nestedStage, pipelineIdentifier)...)
 		}
 		return pTasks
 	} else if stage.isParallel() {
 		var pTasks []pipelinev1alpha1.PipelineTask
 		for _, nestedStage := range stage.Parallel {
-			pTasks = append(pTasks, createPipelineTasks(nestedStage)...)
+			pTasks = append(pTasks, createPipelineTasks(nestedStage, pipelineIdentifier)...)
 		}
 		return pTasks
 	} else {
@@ -830,7 +870,7 @@ func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTas
 			Inputs: []pipelinev1alpha1.PipelineTaskInputResource{
 				{
 					Name:     "workspace",
-					Resource: "common-workspace",
+					Resource: pipelineIdentifier,
 					From:     provider,
 				},
 				{
@@ -843,7 +883,7 @@ func createPipelineTasks(stage *TransformedStage) []pipelinev1alpha1.PipelineTas
 			Outputs: []pipelinev1alpha1.PipelineTaskOutputResource{
 				{
 					Name:     "workspace",
-					Resource: "common-workspace",
+					Resource: pipelineIdentifier,
 				},
 				{
 					// TODO: Switch from this kind of hackish approach to non-resource-based dependencies once they land.
