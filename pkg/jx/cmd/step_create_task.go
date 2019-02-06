@@ -2,14 +2,22 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/ghodss/yaml"
-	"github.com/jenkins-x/jx/pkg/buildpipeline"
 	"github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile/gitresolver"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
 	"github.com/jenkins-x/jx/pkg/kpipelines"
+	"github.com/jenkins-x/jx/pkg/kpipelines/syntax"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -17,16 +25,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"
-	"io"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -135,7 +136,6 @@ func NewCmdStepCreateTask(f Factory, in terminal.FileReader, out terminal.FileWr
 	cmd.Flags().BoolVarP(&options.NoApply, "no-apply", "", false, "Disables creating the Pipeline resources in the kubernetes cluster and just outputs the generated Task to the console or output file")
 	cmd.Flags().BoolVarP(&options.ViewSteps, "view", "", false, "Just view the steps that would be created")
 	cmd.Flags().DurationVarP(&options.Duration, "duration", "", time.Second*30, "Retry duration when trying to create a PipelineRun")
-	cmd.Flags().BoolVarP(&options.FromRepo, "from-repo", "", false, "Use jenkins-x.yaml to generate the Pipeline instead of using build packs")
 	return cmd
 }
 
@@ -182,91 +182,83 @@ func (o *StepCreateTaskOptions) Run() error {
 	// application of those CRDs to the cluster. Step 2 should be identical both
 	// cases, so we'd just need a flag to switch the single function that is used
 	// to generate stuff and then everything else would be identical.
-	if !o.FromRepo {
-		if o.BuildPackURL == "" || o.BuildPackRef == "" {
-			if o.BuildPackURL == "" {
-				o.BuildPackURL = settings.BuildPackURL
-			}
-			if o.BuildPackRef == "" {
-				o.BuildPackRef = settings.BuildPackRef
-			}
-		}
+	if o.BuildPackURL == "" || o.BuildPackRef == "" {
 		if o.BuildPackURL == "" {
-			return util.MissingOption("url")
+			o.BuildPackURL = settings.BuildPackURL
 		}
 		if o.BuildPackRef == "" {
-			return util.MissingOption("ref")
+			o.BuildPackRef = settings.BuildPackRef
 		}
-		if o.PipelineKind == "" {
-			return util.MissingOption("kind")
-		}
-		projectConfig, projectConfigFile, err := config.LoadProjectConfig(o.Dir)
-		if err != nil {
-			return errors.Wrapf(err, "failed to load project config in dir %s", o.Dir)
-		}
-		if o.Pack == "" {
-			o.Pack = projectConfig.BuildPack
-		}
-		if o.Pack == "" {
-			o.Pack, err = o.discoverBuildPack(o.Dir, projectConfig)
-		}
-
-		if o.Pack == "" {
-			return util.MissingOption("pack")
-		}
-
-		err = o.loadPodTemplates(kubeClient, ns)
-		if err != nil {
-			return err
-		}
-		o.MissingPodTemplates = map[string]bool{}
-
-		packsDir, err := gitresolver.InitBuildPack(o.Git(), o.BuildPackURL, o.BuildPackRef)
-		if err != nil {
-			return err
-		}
-
-		resolver, err := gitresolver.CreateResolver(packsDir, o.Git())
-		if err != nil {
-			return err
-		}
-
-		name := o.Pack
-		packDir := filepath.Join(packsDir, name)
-
-		pipelineFile := filepath.Join(packDir, jenkinsfile.PipelineConfigFileName)
-		exists, err := util.FileExists(pipelineFile)
-		if err != nil {
-			return errors.Wrapf(err, "failed to find build pack pipeline YAML: %s", pipelineFile)
-		}
-		if !exists {
-			return fmt.Errorf("no build pack for %s exists at directory %s", name, packDir)
-		}
-		jenkinsfileRunner := true
-		pipelineConfig, err := jenkinsfile.LoadPipelineConfig(pipelineFile, resolver, jenkinsfileRunner, false)
-		if err != nil {
-			return errors.Wrapf(err, "failed to load build pack pipeline YAML: %s", pipelineFile)
-		}
-		localPipelineConfig := projectConfig.PipelineConfig
-		if localPipelineConfig != nil {
-			err = localPipelineConfig.ExtendPipeline(pipelineConfig, jenkinsfileRunner)
-			if err != nil {
-				return errors.Wrapf(err, "failed to override PipelineConfig using configuration in file %s", projectConfigFile)
-			}
-			pipelineConfig = localPipelineConfig
-		}
-		err = o.generateTask(name, pipelineConfig)
-		if err != nil {
-			return errors.Wrapf(err, "failed to generate Task for build pack pipeline YAML: %s", pipelineFile)
-		}
-		return err
-	} else {
-		err := o.generatePipelineFromYaml(filepath.Join(o.Dir, config.ProjectConfigFileName))
-		if err != nil {
-			return errors.Wrapf(err, "failed to generate Pipeline from %s", filepath.Join(o.Dir, config.ProjectConfigFileName))
-		}
-		return nil
 	}
+	if o.BuildPackURL == "" {
+		return util.MissingOption("url")
+	}
+	if o.BuildPackRef == "" {
+		return util.MissingOption("ref")
+	}
+	if o.PipelineKind == "" {
+		return util.MissingOption("kind")
+	}
+	projectConfig, projectConfigFile, err := config.LoadProjectConfig(o.Dir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load project config in dir %s", o.Dir)
+	}
+	if o.Pack == "" {
+		o.Pack = projectConfig.BuildPack
+	}
+	if o.Pack == "" {
+		o.Pack, err = o.discoverBuildPack(o.Dir, projectConfig)
+	}
+
+	if o.Pack == "" {
+		return util.MissingOption("pack")
+	}
+
+	err = o.loadPodTemplates(kubeClient, ns)
+	if err != nil {
+		return err
+	}
+	o.MissingPodTemplates = map[string]bool{}
+
+	packsDir, err := gitresolver.InitBuildPack(o.Git(), o.BuildPackURL, o.BuildPackRef)
+	if err != nil {
+		return err
+	}
+
+	resolver, err := gitresolver.CreateResolver(packsDir, o.Git())
+	if err != nil {
+		return err
+	}
+
+	name := o.Pack
+	packDir := filepath.Join(packsDir, name)
+
+	pipelineFile := filepath.Join(packDir, jenkinsfile.PipelineConfigFileName)
+	exists, err := util.FileExists(pipelineFile)
+	if err != nil {
+		return errors.Wrapf(err, "failed to find build pack pipeline YAML: %s", pipelineFile)
+	}
+	if !exists {
+		return fmt.Errorf("no build pack for %s exists at directory %s", name, packDir)
+	}
+	jenkinsfileRunner := true
+	pipelineConfig, err := jenkinsfile.LoadPipelineConfig(pipelineFile, resolver, jenkinsfileRunner, false)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load build pack pipeline YAML: %s", pipelineFile)
+	}
+	localPipelineConfig := projectConfig.PipelineConfig
+	if localPipelineConfig != nil {
+		err = localPipelineConfig.ExtendPipeline(pipelineConfig, jenkinsfileRunner)
+		if err != nil {
+			return errors.Wrapf(err, "failed to override PipelineConfig using configuration in file %s", projectConfigFile)
+		}
+		pipelineConfig = localPipelineConfig
+	}
+	err = o.generateTask(name, pipelineConfig)
+	if err != nil {
+		return errors.Wrapf(err, "failed to generate Task for build pack pipeline YAML: %s", pipelineFile)
+	}
+	return err
 }
 
 func (o *StepCreateTaskOptions) loadPodTemplates(kubeClient kubernetes.Interface, ns string) error {
@@ -330,6 +322,63 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 		return err
 	}
 
+	// If there's an explicitly specified Pipeline in the lifecycle, use that.
+	if lifecycles.Pipeline != nil {
+		// TODO: Seeing weird behavior seemingly related to https://golang.org/doc/faq#nil_error
+		// if err is reused, maybe we need to switch return types (perhaps upstream in build-pipeline)?
+		if validateErr := lifecycles.Pipeline.Validate(); validateErr != nil {
+			return errors.Wrapf(validateErr, "Validation failed for Pipeline")
+		}
+		err = o.setBuildValues()
+		if err != nil {
+			return err
+		}
+		// TODO: use org-name-branch for pipeline name? Create client now to get
+		// namespace? Set namespace when applying rather than during generation?
+		name := kpipelines.PipelineResourceName(o.gitInfo, o.Branch, o.Context)
+		pipeline, tasks, err := lifecycles.Pipeline.GenerateCRDs(name, o.buildNumber, "will-be-replaced", "abcd", o.PodTemplates)
+		if err != nil {
+			return errors.Wrapf(err, "Generation failed for Pipeline")
+		}
+
+		if validateErr := pipeline.Spec.Validate(); validateErr != nil {
+			return errors.Wrapf(validateErr, "Validation failed for generated Pipeline")
+		}
+		for _, task := range tasks {
+			if validateErr := task.Spec.Validate(); validateErr != nil {
+				return errors.Wrapf(validateErr, "Validation failed for generated Task: %s", task.Name)
+			}
+
+			var volumes []corev1.Volume
+			for i, step := range task.Spec.Steps {
+				volumes = append(volumes, o.modifyVolumes(&step, task.Spec.Volumes)...)
+				o.modifyEnvVars(&step)
+				task.Spec.Steps[i] = step
+			}
+
+			task.Spec.Volumes = volumes
+		}
+
+		// TODO: where should this be created? In GenerateCRDs?
+		var resources []*pipelineapi.PipelineResource
+		resources = append(resources, o.generateSourceRepoResource(name), o.generateTempOrderingResource())
+
+		// TODO: Handle o.ViewSteps
+		err = o.applyPipeline(pipeline, tasks, resources, o.gitInfo, o.Branch)
+		if err != nil {
+			return errors.Wrapf(err, "failed to apply generated Pipeline")
+		}
+
+		folderName := o.OutDir
+		if folderName != "" {
+			err = o.writeOutput(folderName, o.Results.Pipeline, o.Results.Tasks, o.Results.PipelineRun, o.Results.Resources)
+			if err != nil {
+				return errors.Wrapf(err, "failed to write generated output to %s", folderName)
+			}
+		}
+		return nil
+	}
+
 	container := pipelineConfig.Agent.Container
 	if o.CustomImage != "" {
 		container = o.CustomImage
@@ -355,7 +404,7 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 	name := kpipelines.PipelineResourceName(o.gitInfo, o.Branch, o.Context)
 	task := &pipelineapi.Task{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: kpipelines.PipelineAPIVersion,
+			APIVersion: syntax.PipelineAPIVersion,
 			Kind:       "Task",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -396,67 +445,6 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 	return nil
 }
 
-func (o *StepCreateTaskOptions) generatePipelineFromYaml(yamlFile string) error {
-	yamlBytes, err := ioutil.ReadFile(yamlFile)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to read YAML file: %s", yamlFile)
-	}
-	yamlString := string(yamlBytes) // TODO: What encoding does this use?
-	parsed, err := buildpipeline.ParseJenkinsfileYaml(yamlString)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to parse YAML for: %s", yamlFile)
-	}
-
-	// TODO: Seeing weird behavior seemingly related to https://golang.org/doc/faq#nil_error
-	// if err is reused, maybe we need to switch return types (perhaps upstream in build-pipeline)?
-	if validateErr := parsed.Validate(); validateErr != nil {
-		return errors.Wrapf(validateErr, "Validation failed for: %s", yamlFile)
-	}
-	err = o.setBuildValues()
-	if err != nil {
-		return err
-	}
-	// TODO: use org-name-branch for pipeline name? Create client now to get
-	// namespace? Set namespace when applying rather than during generation?
-	name := kpipelines.PipelineResourceName(o.gitInfo, o.Branch, o.Context)
-	pipeline, tasks, err := parsed.GenerateCRDs(name, o.buildNumber, "will-be-replaced", "abcd")
-	if err != nil {
-		return errors.Wrapf(err, "Generation failed for: %s", yamlFile)
-	}
-
-	if validateErr := pipeline.Spec.Validate(); validateErr != nil {
-		return errors.Wrapf(validateErr, "Validation failed for generated Pipeline: %s", yamlFile)
-	}
-	for _, task := range tasks {
-		if validateErr := task.Spec.Validate(); validateErr != nil {
-			errors.Wrapf(validateErr, "Validation failed for generated Task: %s", task.Name)
-		}
-	}
-
-	// TODO: where should this be created? In GenerateCRDs?
-	var resources []*pipelineapi.PipelineResource
-	resource := o.generateSourceRepoResource("common-workspace")
-	if resource != nil {
-		resources = append(resources, resource)
-	}
-	resources = append(resources, o.generateTempOrderingResource())
-
-	// TODO: Handle o.ViewSteps
-	err = o.applyPipeline(pipeline, tasks, resources, o.gitInfo, o.Branch)
-	if err != nil {
-		return errors.Wrapf(err, "failed to apply generated Pipeline")
-	}
-
-	folderName := o.OutDir
-	if folderName != "" {
-		err = o.writeOutput(folderName, o.Results.Pipeline, o.Results.Tasks, o.Results.PipelineRun, o.Results.Resources)
-		if err != nil {
-			return errors.Wrapf(err, "failed to write generated output to %s", folderName)
-		}
-	}
-	return nil
-}
-
 func (o *StepCreateTaskOptions) generateSourceRepoResource(name string) *pipelineapi.PipelineResource {
 	var resource *pipelineapi.PipelineResource
 	if o.gitInfo != nil {
@@ -464,7 +452,7 @@ func (o *StepCreateTaskOptions) generateSourceRepoResource(name string) *pipelin
 		if gitURL != "" {
 			resource = &pipelineapi.PipelineResource{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: kpipelines.PipelineAPIVersion,
+					APIVersion: syntax.PipelineAPIVersion,
 					Kind:       "PipelineResource",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -494,7 +482,7 @@ func (o *StepCreateTaskOptions) generateSourceRepoResource(name string) *pipelin
 func (o *StepCreateTaskOptions) generateTempOrderingResource() *pipelineapi.PipelineResource {
 	return &pipelineapi.PipelineResource{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: kpipelines.PipelineAPIVersion,
+			APIVersion: syntax.PipelineAPIVersion,
 			Kind:       "PipelineResource",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -701,7 +689,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 
 	pipeline.ObjectMeta.Namespace = ns
 	if pipeline.APIVersion == "" {
-		pipeline.APIVersion = kpipelines.PipelineAPIVersion
+		pipeline.APIVersion = syntax.PipelineAPIVersion
 	}
 	if pipeline.Kind == "" {
 		pipeline.Kind = "Pipeline"
@@ -717,7 +705,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 
 	run := &pipelineapi.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: kpipelines.PipelineAPIVersion,
+			APIVersion: syntax.PipelineAPIVersion,
 			Kind:       "PipelineRun",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -725,7 +713,7 @@ func (o *StepCreateTaskOptions) applyPipeline(pipeline *pipelineapi.Pipeline, ta
 			Labels: util.MergeMaps(o.labels),
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion: kpipelines.PipelineAPIVersion,
+					APIVersion: syntax.PipelineAPIVersion,
 					Kind:       "Pipeline",
 					Name:       pipeline.Name,
 					UID:        pipeline.UID,
