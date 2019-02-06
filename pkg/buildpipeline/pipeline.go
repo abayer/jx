@@ -255,6 +255,10 @@ func (j *Jenkinsfile) Validate() *apis.FieldError {
 		return err
 	}
 
+	if err := validateStageNames(j); err != nil {
+		return err
+	}
+
 	if err := validateRootOptions(j.Options).ViaField("options"); err != nil {
 		return err
 	}
@@ -391,7 +395,6 @@ func findDuplicates(names []string) *apis.FieldError {
 	var errors []string
 
 	for k, v := range counts {
-		//println( "Counts", k, " -> ", v )
 		if v > 1 {
 			errors = append( errors, "Duplicate stage name '" + k + "'")
 		}
@@ -399,39 +402,48 @@ func findDuplicates(names []string) *apis.FieldError {
 
 	if len(errors) > 0 {
 		return &apis.FieldError{
-			Message:  fmt.Sprintf("%d duplicates in stage names", len(errors) ),
+			Message:  fmt.Sprintf("Duplicates in stage names"),
+			Details: "There are duplicate 'Stage Names' within the scope",
 			Paths:   errors,
 		}
+	}
+	return nil
+}
 
+func validateStageNames(j *Jenkinsfile) *apis.FieldError{
+	var validate func(stages []Stage, stageNames []string, errors *apis.FieldError)
+    validate = func (stages []Stage, stageNames []string, errors *apis.FieldError) {
+		var childrenToExpand []Stage
+		for _, stage := range stages {
+			stageNames = append(stageNames, stage.Name)
+			if len(stage.Stages) > 0{
+				childrenToExpand = append(childrenToExpand, stage)
+			}
+		}
+
+		for _, child := range childrenToExpand {
+			validate(child.Stages, stageNames, errors)
+		}
+
+		if len(childrenToExpand) == 0 {
+			err := findDuplicates(stageNames)
+			if err != nil {
+				*errors = *errors.Also(err)
+			}
+		}
+	}
+	var names []string
+
+	var error apis.FieldError
+
+	validate(j.Stages, names, &error)
+
+    if error.Error() == "" {
+    	return nil
 	}else {
-		return nil
+		return &error
 	}
-}
-
-func validateStageNames(stages []Stage, stageNames []string, errors *[]apis.FieldError) {
-	childrenToExpand := []Stage{}
-
-	for _, stage := range stages {
-		stageNames = append(stageNames, stage.Name)
-		if len(stage.Stages) > 0{
-			childrenToExpand = append(childrenToExpand, stage)
-		}
-	}
-
-	for _, child := range childrenToExpand {
-		validateStageNames(child.Stages, stageNames, errors)
-
-	}
-
-	if len(childrenToExpand) == 0 {
-		err := findDuplicates(stageNames)
-		if err != nil {
-			//fmt.Println("Error: ", err.Message, " in ", err.Paths )
-			*errors = append(*errors, *err)
-			//fmt.Println("Check: ", errors)
-		}
-	}
-}
+  }
 
 
 func validateStages(stages []Stage, parentAgent Agent) *apis.FieldError {
