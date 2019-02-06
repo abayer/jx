@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jenkins-x/jx/pkg/log"
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/knative/pkg/apis"
 	"github.com/pkg/errors"
@@ -19,10 +18,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-const (
-	defaultContainerName = "maven"
 )
 
 type Jenkinsfile struct {
@@ -670,19 +665,10 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 					stepImage = step.Agent.Image
 				}
 
-				if stepImage == "" {
-					stepImage = defaultContainerName
-					log.Warnf("No 'image' specified in the pipeline configuration so defaulting to use: %s\n", stepImage)
-				}
-
 				var c corev1.Container
 
-				if podTemplates != nil {
+				if podTemplates != nil && podTemplates[stepImage] != nil {
 					podTemplate := podTemplates[stepImage]
-					if podTemplate == nil {
-						log.Warnf("Could not find a pod template for image %s\n", stepImage)
-						podTemplate = podTemplates[defaultContainerName]
-					}
 					containers := podTemplate.Spec.Containers
 					t.Spec.Volumes = append(t.Spec.Volumes, podTemplate.Spec.Volumes...)
 					c = containers[0]
