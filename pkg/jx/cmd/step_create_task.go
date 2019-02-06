@@ -352,7 +352,7 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 
 			var volumes []corev1.Volume
 			for i, step := range task.Spec.Steps {
-				volumes = append(volumes, o.modifyVolumes(&step, task.Spec.Volumes)...)
+				volumes = o.modifyVolumes(&step, task.Spec.Volumes)
 				o.modifyEnvVars(&step)
 				task.Spec.Steps[i] = step
 			}
