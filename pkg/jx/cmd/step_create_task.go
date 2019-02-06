@@ -203,7 +203,7 @@ func (o *StepCreateTaskOptions) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to load project config in dir %s", o.Dir)
 	}
-	log.Warnf("projectConfig: %+v", projectConfig)
+	log.Warnf("projectConfig: %+v", projectConfig.PipelineConfig)
 	if o.Pack == "" {
 		o.Pack = projectConfig.BuildPack
 	}
