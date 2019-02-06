@@ -4,19 +4,19 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/jenkins-x/jx/pkg/kpipelines"
+	"io"
+	"io/ioutil"
+	"regexp"
+	"strings"
+	"time"
+
 	pipelinev1alpha1 "github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/knative/pkg/apis"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
@@ -616,7 +616,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 
 		t := &pipelinev1alpha1.Task{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: kpipelines.PipelineAPIVersion,
+				APIVersion: PipelineAPIVersion,
 				Kind:       "Task",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -752,7 +752,7 @@ func (j *Jenkinsfile) GenerateCRDs(pipelineIdentifier string, buildIdentifier st
 
 	p := &pipelinev1alpha1.Pipeline{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: kpipelines.PipelineAPIVersion,
+			APIVersion: PipelineAPIVersion,
 			Kind:       "Pipeline",
 		},
 		ObjectMeta: metav1.ObjectMeta{
