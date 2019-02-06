@@ -657,6 +657,8 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			},
 		}
 
+		// We don't want to dupe volumes for the Task if there are multiple steps
+		volumes := make(map[string]corev1.Volume)
 		for _, step := range s.Steps {
 			// TODO: Ignoring everything but commands right now, but will eventually need to handle syntactic sugar steps too
 			if step.Command != "" {
@@ -670,7 +672,9 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 				if podTemplates != nil && podTemplates[stepImage] != nil {
 					podTemplate := podTemplates[stepImage]
 					containers := podTemplate.Spec.Containers
-					t.Spec.Volumes = append(t.Spec.Volumes, podTemplate.Spec.Volumes...)
+					for _, volume := range podTemplate.Spec.Volumes {
+						volumes[volume.Name] = volume
+					}
 					c = containers[0]
 					c.Args = append([]string{step.Command}, step.Arguments...)
 				} else {
@@ -690,16 +694,19 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 
 				t.Spec.Steps = append(t.Spec.Steps, c)
 
-/*				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
-					Name:    MangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
-					Env:     env,
-					Image:   stepImage,
-					Command: []string{step.Command},
-					Args:    step.Arguments,
-				})*/
+				/*				t.Spec.Steps = append(t.Spec.Steps, corev1.Container{
+								Name:    MangleToRfc1035Label(fmt.Sprintf("stage-%s-step-%d", s.Name, i), suffix),
+								Env:     env,
+								Image:   stepImage,
+								Command: []string{step.Command},
+								Args:    step.Arguments,
+							})*/
 			} else {
 				return nil, errors.New("syntactic sugar steps not yet supported")
 			}
+		}
+		for _, volume := range volumes {
+			t.Spec.Volumes = append(t.Spec.Volumes, volume)
 		}
 		ts := TransformedStage{Stage: s, Task: t, Depth: depth, EnclosingStage: enclosingStage, PreviousSiblingStage: previousSiblingStage}
 		ts.computeWorkspace(parentWorkspace)
