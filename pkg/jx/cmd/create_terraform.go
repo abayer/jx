@@ -64,7 +64,7 @@ type GKECluster struct {
 
 const (
 	devStorageFullControl = "https://www.googleapis.com/auth/devstorage.full_control"
-	devStorageReadOnly = "https://www.googleapis.com/auth/devstorage.read_only"
+	devStorageReadOnly    = "https://www.googleapis.com/auth/devstorage.read_only"
 )
 
 // Name Get name
@@ -221,6 +221,8 @@ func (g *GKECluster) ParseTfVarsFile(path string) {
 // Flags for a cluster
 type Flags struct {
 	Cluster                     []string
+	ClusterName                 string // cannot be used in conjunction with Cluster
+	CloudProvider               string // cannot be used in conjunction with Cluster
 	OrganisationName            string
 	SkipLogin                   bool
 	ForkOrganisationGitRepo     string
@@ -246,10 +248,9 @@ type Flags struct {
 // CreateTerraformOptions the options for the create spring command
 type CreateTerraformOptions struct {
 	CreateOptions
-	InstallOptions       InstallOptions
-	Flags                Flags
-	Clusters             []Cluster
-	GitRepositoryOptions gits.GitRepositoryOptions
+	InstallOptions InstallOptions
+	Flags          Flags
+	Clusters       []Cluster
 }
 
 var (
@@ -324,7 +325,9 @@ func (options *CreateTerraformOptions) addFlags(cmd *cobra.Command, addSharedFla
 	if addSharedFlags {
 		cmd.Flags().BoolVarP(&options.Flags.SkipLogin, "skip-login", "", false, "Skip Google auth if already logged in via gcloud auth")
 	}
-	cmd.Flags().StringArrayVarP(&options.Flags.Cluster, "cluster", "c", []string{}, "Name and Kubernetes provider (gke, aks, eks) of clusters to be created in the form --cluster foo=gke")
+	cmd.Flags().StringArrayVarP(&options.Flags.Cluster, optionCluster, "c", []string{}, "Name and Kubernetes provider (gke, aks, eks) of clusters to be created in the form --cluster foo=gke")
+	cmd.Flags().StringVarP(&options.Flags.ClusterName, optionClusterName, "", "", "The name of a single cluster to create - cannot be used in conjunction with --"+optionCluster)
+	cmd.Flags().StringVarP(&options.Flags.CloudProvider, optionCloudProvider, "", "", "The cloud provider (eg gke, aws) - cannot be used in conjunction with --"+optionCluster)
 	cmd.Flags().BoolVarP(&options.Flags.SkipTerraformApply, "skip-terraform-apply", "", false, "Skip applying the generated Terraform plans")
 	cmd.Flags().BoolVarP(&options.Flags.IgnoreTerraformWarnings, "ignore-terraform-warnings", "", false, "Ignore any warnings about the Terraform plan being potentially destructive")
 	cmd.Flags().StringVarP(&options.Flags.JxEnvironment, "jx-environment", "", "dev", "The cluster name to install jx inside")
@@ -379,20 +382,19 @@ func (options *CreateTerraformOptions) Run() error {
 		return err
 	}
 
-	if len(options.Flags.Cluster) >= 1 {
-		err := options.ValidateClusterDetails()
-		if err != nil {
-			return err
-		}
+	err = options.ValidateClusterDetails()
+	if err != nil {
+		return err
 	}
 
-	if len(options.Flags.Cluster) == 0 {
+	if len(options.Clusters) == 0 {
 		err := options.ClusterDetailsWizard()
 		if err != nil {
 			return err
 		}
 	}
 
+	options.InstallOptions.Owner = options.InstallOptions.Flags.EnvironmentGitOwner
 	err = options.createOrganisationGitRepo()
 	if err != nil {
 		return err
@@ -480,17 +482,24 @@ func (options *CreateTerraformOptions) ClusterDetailsWizard() error {
 
 // ValidateClusterDetails validates the options for a cluster
 func (options *CreateTerraformOptions) ValidateClusterDetails() error {
-	for _, p := range options.Flags.Cluster {
-		pair := strings.Split(p, "=")
-		if len(pair) != 2 {
-			return errors.New("need to provide cluster values as --cluster name=provider, e.g. --cluster production=gke")
+	if len(options.Flags.Cluster) > 0 {
+		if options.Flags.ClusterName != "" || options.Flags.CloudProvider != "" {
+			return fmt.Errorf("--%s cannot be used in conjunction with --%s or --%s", optionCluster, optionClusterName, optionCloudProvider)
 		}
-		if !stringInValidProviders(pair[1]) {
-			return fmt.Errorf("invalid cluster provider type %s, must be one of %v", p, validTerraformClusterProviders)
-		}
+		for _, p := range options.Flags.Cluster {
+			pair := strings.Split(p, "=")
+			if len(pair) != 2 {
+				return fmt.Errorf("need to provide cluster values as --%s name=provider, e.g. --%s production=gke", optionCluster, optionCluster)
+			}
+			if !stringInValidProviders(pair[1]) {
+				return fmt.Errorf("invalid cluster provider type %s, must be one of %v", p, validTerraformClusterProviders)
+			}
 
-		c := &GKECluster{name: pair[0], provider: pair[1]}
-		options.Clusters = append(options.Clusters, c)
+			c := &GKECluster{name: pair[0], provider: pair[1]}
+			options.Clusters = append(options.Clusters, c)
+		}
+	} else if options.Flags.ClusterName != "" || options.Flags.CloudProvider != "" {
+		options.Clusters = []Cluster{&GKECluster{name: options.Flags.ClusterName, provider: options.Flags.CloudProvider}}
 	}
 	return nil
 }
@@ -526,7 +535,7 @@ func (options *CreateTerraformOptions) createOrganisationGitRepo() error {
 		}
 	} else {
 		details, err := gits.PickNewOrExistingGitRepository(options.BatchMode, authConfigSvc,
-			defaultRepoName, &options.GitRepositoryOptions, nil, nil, options.Git(), true, options.In, options.Out, options.Err)
+			defaultRepoName, &options.InstallOptions.GitRepositoryOptions, nil, nil, options.Git(), true, options.In, options.Out, options.Err)
 		if err != nil {
 			return err
 		}
@@ -749,7 +758,7 @@ func (options *CreateTerraformOptions) findDevCluster(clusterDefinitions []Clust
 			return c, nil
 		}
 	}
-	return nil, fmt.Errorf("Unable to find jx environment %s", options.Flags.JxEnvironment)
+	return nil, fmt.Errorf("unable to find jx environment %s", options.Flags.JxEnvironment)
 }
 
 func (options *CreateTerraformOptions) writeGitIgnoreFile(dir string) error {
@@ -879,7 +888,7 @@ func (options *CreateTerraformOptions) configureGKECluster(g *GKECluster, path s
 			prompt := &survey.Confirm{
 				Message: "Would you like use preemptible VMs?",
 				Default: false,
-				Help: "Preemptible VMs can significantly lower the cost of a cluster",
+				Help:    "Preemptible VMs can significantly lower the cost of a cluster",
 			}
 			survey.AskOne(prompt, &g.Preemptible, nil, surveyOpts)
 		}
@@ -890,7 +899,7 @@ func (options *CreateTerraformOptions) configureGKECluster(g *GKECluster, path s
 			prompt := &survey.Confirm{
 				Message: "Would you like to access Google Cloud Storage / Google Container Registry?",
 				Default: false,
-				Help: "Enables enhanced oauth scopes to allow access to storage based services",
+				Help:    "Enables enhanced oauth scopes to allow access to storage based services",
 			}
 			survey.AskOne(prompt, &options.Flags.GKEUseEnhancedScopes, nil, surveyOpts)
 
@@ -909,7 +918,7 @@ func (options *CreateTerraformOptions) configureGKECluster(g *GKECluster, path s
 				prompt := &survey.Confirm{
 					Message: "Would you like to enable Cloud Build, Container Registry & Container Analysis APIs?",
 					Default: false,
-					Help: "Enables extra APIs on the GCP project",
+					Help:    "Enables extra APIs on the GCP project",
 				}
 				survey.AskOne(prompt, &options.Flags.GKEUseEnhancedApis, nil, surveyOpts)
 			}
@@ -921,6 +930,20 @@ func (options *CreateTerraformOptions) configureGKECluster(g *GKECluster, path s
 		err := gke.EnableAPIs(g.ProjectID, "cloudbuild", "containerregistry", "containeranalysis")
 		if err != nil {
 			return err
+		}
+	}
+
+	if !options.BatchMode {
+		// only provide the option if enhanced scopes are enabled
+		if options.InstallOptions.Flags.Kaniko {
+			if !options.InstallOptions.Flags.Kaniko {
+				prompt := &survey.Confirm{
+					Message: "Would you like to enable Kaniko for building container images",
+					Default: false,
+					Help:    "Use Kaniko for docker images",
+				}
+				survey.AskOne(prompt, &options.InstallOptions.Flags.Kaniko, nil, surveyOpts)
+			}
 		}
 	}
 
@@ -1010,7 +1033,7 @@ func (options *CreateTerraformOptions) applyTerraformGKE(g *GKECluster, path str
 		serviceAccountName := fmt.Sprintf("jx-%s-%s", options.Flags.OrganisationName, g.Name())
 		fmt.Fprintf(options.Out, "No GCP service account provided, creating %s\n", util.ColorInfo(serviceAccountName))
 
-		_, err := gke.GetOrCreateServiceAccount(serviceAccountName, g.ProjectID, filepath.Dir(path), gke.REQUIRED_SERVICE_ACCOUNT_ROLES)
+		_, err := gke.GetOrCreateServiceAccount(serviceAccountName, g.ProjectID, filepath.Dir(path), gke.RequiredServiceAccountRoles)
 		if err != nil {
 			return err
 		}

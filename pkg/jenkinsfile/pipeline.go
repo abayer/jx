@@ -3,6 +3,7 @@ package jenkinsfile
 import (
 	"bytes"
 	"fmt"
+	"github.com/jenkins-x/jx/pkg/kpipelines/syntax"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -53,6 +54,7 @@ type Pipelines struct {
 
 // PipelineStep defines an individual step in a pipeline, either a command (sh) or groovy block
 type PipelineStep struct {
+	Name      string          `yaml:"name,omitempty"`
 	Comment   string          `yaml:"comment,omitempty"`
 	Container string          `yaml:"container,omitempty"`
 	Dir       string          `yaml:"dir,omitempty"`
@@ -64,12 +66,13 @@ type PipelineStep struct {
 
 // PipelineLifecycles defines the steps of a lifecycle section
 type PipelineLifecycles struct {
-	Setup      *PipelineLifecycle `yaml:"setup,omitempty"`
-	SetVersion *PipelineLifecycle `yaml:"setVersion,omitempty"`
-	PreBuild   *PipelineLifecycle `yaml:"preBuild,omitempty"`
-	Build      *PipelineLifecycle `yaml:"build,omitempty"`
-	PostBuild  *PipelineLifecycle `yaml:"postBuild,omitempty"`
-	Promote    *PipelineLifecycle `yaml:"promote,omitempty"`
+	Setup      *PipelineLifecycle  `yaml:"setup,omitempty"`
+	SetVersion *PipelineLifecycle  `yaml:"setVersion,omitempty"`
+	PreBuild   *PipelineLifecycle  `yaml:"preBuild,omitempty"`
+	Build      *PipelineLifecycle  `yaml:"build,omitempty"`
+	PostBuild  *PipelineLifecycle  `yaml:"postBuild,omitempty"`
+	Promote    *PipelineLifecycle  `yaml:"promote,omitempty"`
+	Pipeline   *syntax.Jenkinsfile `yaml:"pipeline,omitempty"`
 }
 
 // PipelineLifecycle defines the steps of a lifecycle section
@@ -83,8 +86,14 @@ type PipelineLifecycle struct {
 	Replace bool `yaml:"replace,omitempty"`
 }
 
-// PipelineLifecycleArray an array of lifecycle pointers
-type PipelineLifecycleArray []*PipelineLifecycle
+// NamedLifecycle a lifecycle and its name
+type NamedLifecycle struct {
+	Name      string
+	Lifecycle *PipelineLifecycle
+}
+
+// PipelineLifecycleArray an array of named lifecycle pointers
+type PipelineLifecycleArray []NamedLifecycle
 
 // PipelineExtends defines the extension (e.g. parent pipeline which is overloaded
 type PipelineExtends struct {
@@ -149,17 +158,31 @@ func (a *PipelineLifecycles) Groovy() string {
 
 // All returns all lifecycles in order
 func (a *PipelineLifecycles) All() PipelineLifecycleArray {
-	return []*PipelineLifecycle{a.Setup, a.SetVersion, a.PreBuild, a.Build, a.PostBuild, a.Promote}
+	return []NamedLifecycle{
+		{"setup", a.Setup},
+		{"setversion", a.SetVersion},
+		{"prebuild", a.PreBuild},
+		{"build", a.Build},
+		{"postbuild", a.PostBuild},
+		{"promote", a.Promote},
+	}
 }
 
 // AllButPromote returns all lifecycles but promote
 func (a *PipelineLifecycles) AllButPromote() PipelineLifecycleArray {
-	return []*PipelineLifecycle{a.Setup, a.SetVersion, a.PreBuild, a.Build, a.PostBuild}
+	return []NamedLifecycle{
+		{"setup", a.Setup},
+		{"setversion", a.SetVersion},
+		{"prebuild", a.PreBuild},
+		{"build", a.Build},
+		{"postbuild", a.PostBuild},
+	}
 }
 
 // RemoveWhenStatements removes any when conditions
 func (a *PipelineLifecycles) RemoveWhenStatements(prow bool) {
-	for _, v := range a.All() {
+	for _, n := range a.All() {
+		v := n.Lifecycle
 		if v != nil {
 			v.RemoveWhenStatements(prow)
 		}
@@ -169,7 +192,8 @@ func (a *PipelineLifecycles) RemoveWhenStatements(prow bool) {
 // Groovy returns the groovy string for the lifecycles
 func (s PipelineLifecycleArray) Groovy() string {
 	statements := []*Statement{}
-	for _, l := range s {
+	for _, n := range s {
+		l := n.Lifecycle
 		if l != nil {
 			statements = append(statements, l.ToJenkinsfileStatements()...)
 		}
@@ -181,9 +205,15 @@ func (s PipelineLifecycleArray) Groovy() string {
 }
 
 // Groovy returns the groovy expression for this lifecycle
-func (l *PipelineLifecycle) Groovy() string {
-	lifecycles := PipelineLifecycleArray([]*PipelineLifecycle{l})
+func (l *NamedLifecycle) Groovy() string {
+	lifecycles := PipelineLifecycleArray([]NamedLifecycle{*l})
 	return lifecycles.Groovy()
+}
+
+// Groovy returns the groovy expression for this lifecycle
+func (l *PipelineLifecycle) Groovy() string {
+	nl := &NamedLifecycle{Name: "", Lifecycle: l}
+	return nl.Groovy()
 }
 
 // ToJenkinsfileStatements converts the lifecycle to one or more jenkinsfile statements
@@ -260,7 +290,8 @@ func defaultLifecycleContainerAndDir(container string, dir string, lifecycles Pi
 	if container == "" && dir == "" {
 		return
 	}
-	for _, l := range lifecycles {
+	for _, n := range lifecycles {
+		l := n.Lifecycle
 		if l != nil {
 			if dir != "" {
 				l.PreSteps = defaultDirAroundSteps(dir, l.PreSteps)
@@ -525,6 +556,8 @@ func ExtendPipelines(parent *PipelineLifecycles, base *PipelineLifecycles) *Pipe
 		Build:      ExtendLifecycle(parent.Build, base.Build),
 		PostBuild:  ExtendLifecycle(parent.PostBuild, base.PostBuild),
 		Promote:    ExtendLifecycle(parent.Promote, base.Promote),
+		// TODO: Actually do extension for Pipeline rather than just copying it wholesale
+		Pipeline: parent.Pipeline,
 	}
 }
 
