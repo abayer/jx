@@ -582,16 +582,6 @@ func scopedEnv(newEnv []EnvVar, parentEnv []corev1.EnvVar) []corev1.EnvVar {
 	return env
 }
 
-func (j *PipelineStructure) toStepEnvVars() []corev1.EnvVar {
-	env := make([]corev1.EnvVar, 0, len(j.Environment))
-
-	for _, e := range j.Environment {
-		env = append(env, corev1.EnvVar{Name: e.Name, Value: e.Value})
-	}
-
-	return env
-}
-
 type transformedStage struct {
 	Stage Stage
 	// Only one of Sequential, Parallel, and Task is non-empty
@@ -705,6 +695,9 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			ws.TargetPath = wsPath
 		}
 
+		if len(env) > 0 {
+			t.Spec.Env = env
+		}
 		t.Spec.Inputs = &pipelinev1alpha1.Inputs{
 			Resources: []pipelinev1alpha1.TaskResource{*ws,
 				{
@@ -730,7 +723,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		// We don't want to dupe volumes for the Task if there are multiple steps
 		volumes := make(map[string]corev1.Volume)
 		for _, step := range s.Steps {
-			actualSteps, stepVolumes, newCounter, err := generateSteps(step, agent.Image, env, podTemplates, stepCounter)
+			actualSteps, stepVolumes, newCounter, err := generateSteps(step, agent.Image, []corev1.EnvVar{}, podTemplates, stepCounter)
 			if err != nil {
 				return nil, err
 			}
@@ -799,7 +792,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 	return nil, errors.New("no steps, sequential stages, or parallel stages")
 }
 
-func generateSteps(step Step, inheritedAgent string, env []corev1.EnvVar, podTemplates map[string]*corev1.Pod, stepCounter int) ([]corev1.Container, map[string]corev1.Volume, int, error) {
+func generateSteps(step Step, inheritedAgent string, stepEnv []corev1.EnvVar, podTemplates map[string]*corev1.Pod, stepCounter int) ([]corev1.Container, map[string]corev1.Volume, int, error) {
 	volumes := make(map[string]corev1.Volume)
 	var steps []corev1.Container
 
@@ -839,12 +832,14 @@ func generateSteps(step Step, inheritedAgent string, env []corev1.EnvVar, podTem
 		c.Stdin = false
 		c.TTY = false
 
-		c.Env = env
+		if len(stepEnv) > 0 {
+			c.Env = stepEnv
+		}
 
 		steps = append(steps, c)
 	} else if !equality.Semantic.DeepEqual(step.Loop, Loop{}) {
 		for _, v := range step.Loop.Values {
-			loopEnv := scopedEnv([]EnvVar{{Name: step.Loop.Variable, Value: v}}, env)
+			loopEnv := append([]corev1.EnvVar{{Name: step.Loop.Variable, Value: v}}, stepEnv...)
 
 			for _, s := range step.Loop.Steps {
 				loopSteps, loopVolumes, loopCounter, loopErr := generateSteps(s, stepImage, loopEnv, podTemplates, stepCounter)
@@ -919,18 +914,22 @@ func (j *PipelineStructure) GenerateCRDs(pipelineIdentifier string, buildIdentif
 
 	p.SetDefaults()
 
+	pipelineEnv := scopedEnv(j.Environment, []corev1.EnvVar{})
+
+	if len(pipelineEnv) > 0 {
+		p.Spec.Env = pipelineEnv
+	}
+
 	var previousStage *transformedStage
 
 	var tasks []*pipelinev1alpha1.Task
-
-	baseEnv := j.toStepEnvVars()
 
 	for _, s := range j.Stages {
 		wsPath := ""
 		if len(tasks) == 0 {
 			wsPath = "workspace"
 		}
-		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, baseEnv, j.Agent, "default", suffix, 0, nil, previousStage, podTemplates)
+		stage, err := stageToTask(s, pipelineIdentifier, buildIdentifier, namespace, wsPath, []corev1.EnvVar{}, j.Agent, "default", suffix, 0, nil, previousStage, podTemplates)
 		if err != nil {
 			return nil, nil, err
 		}

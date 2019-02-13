@@ -346,6 +346,8 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 			return errors.Wrapf(err, "Generation failed for Pipeline")
 		}
 
+		o.modifyEnvVars(pipeline)
+
 		if validateErr := pipeline.Spec.Validate(); validateErr != nil {
 			return errors.Wrapf(validateErr, "Validation failed for generated Pipeline")
 		}
@@ -357,7 +359,6 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 			var volumes []corev1.Volume
 			for i, step := range task.Spec.Steps {
 				volumes = o.modifyVolumes(&step, task.Spec.Volumes)
-				o.modifyEnvVars(&step)
 				task.Spec.Steps[i] = step
 			}
 
@@ -806,7 +807,6 @@ func (o *StepCreateTaskOptions) createSteps(languageName string, pipelineConfig 
 		c.Name = prefix + stepName
 
 		volumes = o.modifyVolumes(&c, volumes)
-		o.modifyEnvVars(&c)
 
 		c.Command = []string{"/bin/sh"}
 		if o.CustomImage != "" {
@@ -861,9 +861,9 @@ func (o *StepCreateTaskOptions) discoverBuildPack(dir string, projectConfig *con
 	return pack, nil
 }
 
-func (o *StepCreateTaskOptions) modifyEnvVars(container *corev1.Container) {
+func (o *StepCreateTaskOptions) modifyEnvVars(p *pipelineapi.Pipeline) {
 	envVars := []corev1.EnvVar{}
-	for _, e := range container.Env {
+	for _, e := range p.Spec.Env {
 		name := e.Name
 		if name != "JENKINS_URL" {
 			envVars = append(envVars, e)
@@ -942,7 +942,7 @@ func (o *StepCreateTaskOptions) modifyEnvVars(container *corev1.Container) {
 			Value: "true",
 		})
 	}
-	container.Env = envVars
+	p.Spec.Env = envVars
 }
 
 func (o *StepCreateTaskOptions) modifyVolumes(container *corev1.Container, volumes []corev1.Volume) []corev1.Volume {
