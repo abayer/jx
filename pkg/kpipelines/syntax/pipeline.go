@@ -714,6 +714,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 			},
 		}
 
+		/* Disabling for demo purposes
 		t.Spec.Outputs = &pipelinev1alpha1.Outputs{
 			Resources: []pipelinev1alpha1.TaskResource{
 				{
@@ -726,7 +727,7 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 				},
 			},
 		}
-
+*/
 		// We don't want to dupe volumes for the Task if there are multiple steps
 		volumes := make(map[string]corev1.Volume)
 		for _, step := range s.Steps {
@@ -983,6 +984,7 @@ func createPipelineTasks(stage *transformedStage, pipelineIdentifier string) []p
 					From:     previousStageNames,
 				},
 			},
+			/* Disabling this for demo purposes - don't use multi stage demos!
 			Outputs: []pipelinev1alpha1.PipelineTaskOutputResource{
 				{
 					Name:     "workspace",
@@ -993,7 +995,7 @@ func createPipelineTasks(stage *transformedStage, pipelineIdentifier string) []p
 					Name:     "temp-ordering-resource",
 					Resource: "temp-ordering-resource",
 				},
-			},
+			},*/
 		}
 		stage.PipelineTask = &pTask
 
