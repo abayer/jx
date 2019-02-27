@@ -395,6 +395,11 @@ func (o *StepCreateTaskOptions) generatePipeline(languageName string, pipelineCo
 		}
 
 		pipeline, tasks, structure, err := lifecycles.Pipeline.GenerateCRDs(name, o.buildNumber, "will-be-replaced", "abcd", o.PodTemplates, taskParams)
+		pipeline.Spec.Params = o.createPipelineParams()
+		for i, pt := range pipeline.Spec.Tasks {
+			pt.Params = append(pt.Params, o.createPipelineTaskParams()...)
+			pipeline.Spec.Tasks[i] = pt
+		}
 		if err != nil {
 			return errors.Wrapf(err, "Generation failed for Pipeline")
 		}
@@ -538,6 +543,17 @@ func (o *StepCreateTaskOptions) createTaskParams() []pipelineapi.TaskParam {
 		})
 	}
 	return taskParams
+}
+
+func (o *StepCreateTaskOptions) createPipelineTaskParams() []pipelineapi.Param {
+	ptp := []pipelineapi.Param{}
+	for _, p := range o.Results.PipelineParams {
+		ptp = append(ptp, pipelineapi.Param{
+			Name: p.Name,
+			Value: fmt.Sprintf("${params.%s}", p.Name),
+		})
+	}
+	return ptp
 }
 
 func (o *StepCreateTaskOptions) createPipelineParams() []pipelineapi.PipelineParam {
@@ -744,10 +760,9 @@ func (o *StepCreateTaskOptions) applyTask(task *pipelineapi.Task, gitInfo *gits.
 				Kind:       pipelineapi.NamespacedTaskKind,
 				APIVersion: task.APIVersion,
 			},
-			Params: o.Results.PipelineParams,
+			Params: o.createPipelineTaskParams(),
 		},
 	}
-
 	pipeline := &pipelineapi.Pipeline{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: tekton.PipelineResourceName(gitInfo, branch, o.Context),
