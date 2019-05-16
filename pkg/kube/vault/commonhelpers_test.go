@@ -5,9 +5,9 @@ import (
 	"github.com/banzaicloud/bank-vaults/operator/pkg/client/clientset/versioned/fake"
 	gits_test "github.com/jenkins-x/jx/pkg/gits/mocks"
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
-	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	cmdMocks "github.com/jenkins-x/jx/pkg/jx/cmd/clients/mocks"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	kubevault "github.com/jenkins-x/jx/pkg/kube/vault"
 	. "github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func setupMocks(t *testing.T, term *terminal.Stdio) (*fake.Clientset, *kubevault
 	if term != nil {
 		options.In, options.Out, options.Err = term.In, term.Out, term.Err
 	}
-	cmd.ConfigureTestOptions(options, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(options, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
 	vaultOperatorClient := fake.NewSimpleClientset()
 	When(options.VaultOperatorClient()).ThenReturn(vaultOperatorClient, nil)
 	f, err := kubevault.NewInteractiveVaultClientFactory(options)

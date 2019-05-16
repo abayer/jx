@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 
@@ -76,7 +77,7 @@ func NewCmdSync(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	/*	cmd.Flags().StringVarP(&options.Container, "container", "c", "", "The name of the container to log")

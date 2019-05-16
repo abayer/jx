@@ -2,18 +2,19 @@ package cmd
 
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 )
 
 // StepSyntaxOptions contains the command line flags
 type StepSyntaxOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 // NewCmdStepSyntax Steps a command object for the "step" command
 func NewCmdStepSyntax(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepSyntaxOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -25,7 +26,7 @@ func NewCmdStepSyntax(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdStepSyntaxValidate(commonOpts))

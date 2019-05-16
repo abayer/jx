@@ -6,8 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	//_ "github.com/Azure/draft/pkg/linguist"
+	"time"
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"sigs.k8s.io/yaml"
 
 	"github.com/cenkalti/backoff"
@@ -29,24 +32,20 @@ import (
 	gitcfg "gopkg.in/src-d/go-git.v4/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	//_ "github.com/Azure/draft/pkg/linguist"
-	"time"
-
 	"github.com/denormal/go-gitignore"
 	"github.com/jenkins-x/jx/pkg/prow"
 )
 
 const (
 	// PlaceHolderPrefix is prefix for placeholders
-	PlaceHolderPrefix = "REPLACE_ME"
+
 	// PlaceHolderAppName placeholder for app name
-	PlaceHolderAppName = PlaceHolderPrefix + "_APP_NAME"
+
 	// PlaceHolderGitProvider placeholder for git provider
-	PlaceHolderGitProvider = PlaceHolderPrefix + "_GIT_PROVIDER"
+
 	// PlaceHolderOrg placeholder for org
-	PlaceHolderOrg = PlaceHolderPrefix + "_ORG"
+
 	// PlaceHolderDockerRegistryOrg placeholder for docker registry
-	PlaceHolderDockerRegistryOrg = PlaceHolderPrefix + "_DOCKER_REGISTRY_ORG"
 
 	minimumMavenDeployVersion = "2.8.2"
 
@@ -156,7 +155,7 @@ func NewCmdImport(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.RepoURL, "url", "u", "", "The git clone URL to clone into the current directory and then import")
@@ -1015,17 +1014,17 @@ func (options *ImportOptions) ReplacePlaceholders(gitServerName, dockerRegistryO
 	}
 
 	replacer := strings.NewReplacer(
-		PlaceHolderAppName, strings.ToLower(options.AppName),
-		PlaceHolderGitProvider, strings.ToLower(gitServerName),
-		PlaceHolderOrg, strings.ToLower(options.Organisation),
-		PlaceHolderDockerRegistryOrg, strings.ToLower(dockerRegistryOrg))
+		opts.PlaceHolderAppName, strings.ToLower(options.AppName),
+		opts.PlaceHolderGitProvider, strings.ToLower(gitServerName),
+		opts.PlaceHolderOrg, strings.ToLower(options.Organisation),
+		opts.PlaceHolderDockerRegistryOrg, strings.ToLower(dockerRegistryOrg))
 
 	pathsToRename := []string{} // Renaming must be done post-Walk
 	if err := filepath.Walk(options.Dir, func(f string, fi os.FileInfo, err error) error {
 		if skip, err := options.skipPathForReplacement(f, fi, ignore); skip {
 			return err
 		}
-		if strings.Contains(filepath.Base(f), PlaceHolderPrefix) {
+		if strings.Contains(filepath.Base(f), opts.PlaceHolderPrefix) {
 			// Prepend so children are renamed before their parents
 			pathsToRename = append([]string{f}, pathsToRename...)
 		}
@@ -1077,7 +1076,7 @@ func replacePlaceholdersInFile(replacer *strings.Replacer, file string) error {
 	}
 
 	lines := string(input)
-	if strings.Contains(lines, PlaceHolderPrefix) { // Avoid unnecessarily rewriting files
+	if strings.Contains(lines, opts.PlaceHolderPrefix) { // Avoid unnecessarily rewriting files
 		output := replacer.Replace(lines)
 		err = ioutil.WriteFile(file, []byte(output), 0644)
 		if err != nil {

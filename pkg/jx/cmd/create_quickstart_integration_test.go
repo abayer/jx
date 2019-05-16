@@ -11,6 +11,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/quickstarts"
 	"github.com/jenkins-x/jx/pkg/tests"
 	"github.com/stretchr/testify/assert"
@@ -20,16 +21,16 @@ func TestCreateQuickstartProjects(t *testing.T) {
 	// TODO lets skip this test for now as it often fails with rate limits
 	t.SkipNow()
 
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
-	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
+	originalKubeCfg, tempKubeCfg, err := util.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 
@@ -50,7 +51,7 @@ func TestCreateQuickstartProjects(t *testing.T) {
 			ProjectName: appName,
 		},
 	}
-	cmd.ConfigureTestOptions(o.CommonOptions, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, testDir, true))
+	util.ConfigureTestOptions(o.CommonOptions, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, testDir, true))
 	o.Dir = testDir
 	o.OutDir = testDir
 	o.DryRun = true

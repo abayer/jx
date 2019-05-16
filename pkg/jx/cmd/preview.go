@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pkg/errors"
 
 	"github.com/cenkalti/backoff"
@@ -118,7 +119,7 @@ func NewCmdPreview(commonOpts *opts.CommonOptions) *cobra.Command {
 				options.BatchMode = commonOpts.InCDPipeline()
 			}
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	//addCreateAppFlags(cmd, &options.CreateOptions)
@@ -588,7 +589,7 @@ func (o *PreviewOptions) Run() error {
 			PR:         o.PullRequestName,
 		},
 		StepPROptions: StepPROptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: o.CommonOptions,
 			},
 		},

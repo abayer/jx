@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 
 	"github.com/jenkins-x/jx/pkg/cloud/amazon"
@@ -15,7 +16,7 @@ import (
 
 // StepPreBuildOptions contains the command line flags
 type StepPreBuildOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Image string
 }
@@ -32,7 +33,7 @@ var (
 
 func NewCmdStepPreBuild(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepPreBuildOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -45,7 +46,7 @@ func NewCmdStepPreBuild(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Image, optionImage, "i", "", "The image name that is about to be built")

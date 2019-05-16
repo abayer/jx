@@ -1,9 +1,11 @@
 package cmd
 
 import (
-	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"github.com/sirupsen/logrus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -36,7 +38,7 @@ func NewCmdDeleteAws(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

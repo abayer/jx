@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/google/uuid"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/helm"
 	configio "github.com/jenkins-x/jx/pkg/io"
@@ -54,7 +55,7 @@ var (
 func NewCmdStepHelmApply(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepHelmApplyOptions{
 		StepHelmOptions: StepHelmOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: commonOpts,
 			},
 		},
@@ -69,7 +70,7 @@ func NewCmdStepHelmApply(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	options.addStepHelmFlags(cmd)
@@ -109,7 +110,7 @@ func (o *StepHelmApplyOptions) Run() error {
 	if !o.DisableHelmVersion {
 		(&StepHelmVersionOptions{
 			StepHelmOptions: StepHelmOptions{
-				StepOptions: StepOptions{
+				StepOptions: opts.StepOptions{
 					CommonOptions: &opts.CommonOptions{},
 				},
 			},

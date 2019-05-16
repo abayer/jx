@@ -11,21 +11,22 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	util2 "github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateOrganisationFolderStructures(t *testing.T) {
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util2.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util2.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
-	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
+	originalKubeCfg, tempKubeCfg, err := util2.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util2.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 

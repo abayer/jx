@@ -12,6 +12,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ import (
 
 // StepUnstashOptions contains the command line flags
 type StepUnstashOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	URL     string
 	OutDir  string
@@ -44,7 +45,7 @@ var (
 // NewCmdStepUnstash creates the CLI command
 func NewCmdStepUnstash(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepUnstashOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -58,7 +59,7 @@ func NewCmdStepUnstash(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.URL, "url", "u", "", "The fully qualified URL to the file to unstash including the storage host, path and file name")

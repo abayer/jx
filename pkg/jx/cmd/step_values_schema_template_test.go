@@ -3,6 +3,7 @@ package cmd
 import (
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pborman/uuid"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +19,7 @@ import (
 func TestStepValuesSchemaTemplate(t *testing.T) {
 	cmName := uuid.New()
 	o := StepValuesSchemaTemplateOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{},
 		},
 		ConfigMapName: cmName,
@@ -26,7 +27,7 @@ func TestStepValuesSchemaTemplate(t *testing.T) {
 			"defaultName=def",
 		},
 	}
-	ConfigureTestOptions(o.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(o.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
 
 	schemaTemplate := `{
   "$id": "https:/jenkins-x.io/tests/basicTypes.schema.json",

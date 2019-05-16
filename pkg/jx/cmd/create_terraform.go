@@ -1,23 +1,15 @@
 package cmd
 
 import (
-	"strings"
-
-	"fmt"
-
-	os_user "os/user"
-
-	"strconv"
-
 	"errors"
-
-	"path/filepath"
-
+	"fmt"
 	"os"
-
-	"time"
-
+	os_user "os/user"
 	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/jenkins-x/jx/pkg/cloud"
@@ -25,6 +17,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/terraform"
@@ -301,7 +294,7 @@ func NewCmdCreateTerraform(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

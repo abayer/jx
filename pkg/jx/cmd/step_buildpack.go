@@ -2,18 +2,19 @@ package cmd
 
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 )
 
 // StepBuildPackOptions contains the command line flags
 type StepBuildPackOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 // NewCmdStepBuildPack Steps a command object for the "step" command
 func NewCmdStepBuildPack(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepBuildPackOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -26,7 +27,7 @@ func NewCmdStepBuildPack(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdStepBuildPackApply(commonOpts))

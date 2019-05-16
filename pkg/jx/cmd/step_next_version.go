@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -10,9 +11,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/util"
-
-	"encoding/json"
 
 	"github.com/blang/semver"
 	"github.com/hashicorp/go-version"
@@ -36,7 +36,7 @@ type StepNextVersionOptions struct {
 	Tag           bool
 	UseGitTagOnly bool
 	NewVersion    string
-	StepOptions
+	opts.StepOptions
 }
 
 type Project struct {
@@ -62,7 +62,7 @@ var (
 
 func NewCmdStepNextVersion(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepNextVersionOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -75,7 +75,7 @@ func NewCmdStepNextVersion(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Filename, "filename", "f", "", "Filename that contains version property to update, e.g. package.json")

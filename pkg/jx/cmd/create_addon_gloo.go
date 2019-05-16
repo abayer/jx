@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
@@ -63,7 +64,7 @@ func NewCmdCreateAddonGloo(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.GlooNamespace, "namespace", "n", glooNamespace, "The gloo system namespace")

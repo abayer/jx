@@ -16,6 +16,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/kube/serviceaccount"
 	"github.com/jenkins-x/jx/pkg/kube/services"
@@ -95,7 +96,7 @@ func NewCmdCreateDevPod(commonOpts *opts.CommonOptions) *cobra.Command {
 			CommonOptions: commonOpts,
 		},
 		GitCredentials: StepGitCredentialsOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: commonOpts,
 			},
 		},
@@ -111,7 +112,7 @@ func NewCmdCreateDevPod(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

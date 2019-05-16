@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
+
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pkg/errors"
 
 	"github.com/jenkins-x/jx/pkg/kube"
@@ -13,8 +16,6 @@ import (
 	api_errors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"sort"
 
 	"github.com/jenkins-x/jx/pkg/util"
 	"gopkg.in/AlecAivazis/survey.v1"
@@ -65,7 +66,7 @@ func NewCmdNamespace(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

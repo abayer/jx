@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/helm"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pkg/errors"
 
 	"github.com/jenkins-x/jx/pkg/gits"
@@ -80,7 +81,7 @@ func NewCmdCreateAddonEnvironmentController(commonOpts *opts.CommonOptions) *cob
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Namespace, "namespace", "n", "", "The namespace to install the controller")

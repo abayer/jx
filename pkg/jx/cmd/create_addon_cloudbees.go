@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
@@ -72,7 +73,7 @@ func NewCmdCreateAddonCloudBees(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

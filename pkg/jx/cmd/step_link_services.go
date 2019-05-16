@@ -5,6 +5,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/spf13/cobra"
@@ -38,7 +39,7 @@ var (
 
 // StepLinkServicesOptions contains the command line flags
 type StepLinkServicesOptions struct {
-	StepOptions
+	opts.StepOptions
 	FromNamespace string
 	ToNamespace   string
 	Includes      []string
@@ -48,7 +49,7 @@ type StepLinkServicesOptions struct {
 // NewCmdStepLinkServices Creates a new Command object
 func NewCmdStepLinkServices(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepLinkServicesOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -62,7 +63,7 @@ func NewCmdStepLinkServices(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

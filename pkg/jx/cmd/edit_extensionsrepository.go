@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	jenkinsv1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/log"
@@ -70,7 +71,7 @@ func NewCmdEditExtensionsRepository(commonOpts *opts.CommonOptions) *cobra.Comma
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.ExtensionsRepositoryUrl, optionExtensionsRepositoryUrl, "", "", "The extensions repository URL to use")

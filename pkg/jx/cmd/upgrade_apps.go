@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jenkins-x/jx/pkg/gits"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/apps"
 	"github.com/jenkins-x/jx/pkg/io/secrets"
@@ -74,7 +75,7 @@ func NewCmdUpgradeApps(commonOpts *opts.CommonOptions) *cobra.Command {
 			o.Cmd = cmd
 			o.Args = args
 			err := o.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

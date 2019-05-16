@@ -7,6 +7,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ var (
 
 // StepBuildPackApplyOptions contains the command line flags
 type StepBuildPackApplyOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Dir                     string
 	Jenkinsfile             string
@@ -39,7 +40,7 @@ type StepBuildPackApplyOptions struct {
 // NewCmdStepBuildPackApply Creates a new Command object
 func NewCmdStepBuildPackApply(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepBuildPackApplyOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -53,7 +54,7 @@ func NewCmdStepBuildPackApply(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

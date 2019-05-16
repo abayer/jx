@@ -9,6 +9,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/jenkins-x/jx/pkg/workflow"
@@ -17,16 +18,16 @@ import (
 )
 
 func TestGetWorkflow(t *testing.T) {
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
 	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 	o := &cmd.GetWorkflowOptions{
@@ -41,7 +42,7 @@ func TestGetWorkflow(t *testing.T) {
 	production.Spec.Order = 200
 
 	myFlowName := "myflow"
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{},
 		[]runtime.Object{
 			staging,
@@ -71,10 +72,10 @@ func TestGetWorkflow(t *testing.T) {
 			spec := workflow.Spec
 			assert.Equal(t, 2, len(spec.Steps), "number of steps")
 			if len(spec.Steps) > 0 {
-				cmd.AssertPromoteStep(t, &spec.Steps[0], "staging")
+				util.AssertPromoteStep(t, &spec.Steps[0], "staging")
 			}
 			if len(spec.Steps) > 1 {
-				cmd.AssertPromoteStep(t, &spec.Steps[1], "production")
+				util.AssertPromoteStep(t, &spec.Steps[1], "production")
 			}
 		}
 	}

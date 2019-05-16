@@ -8,6 +8,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -18,7 +19,7 @@ import (
 
 // StepGpgCredentialsOptions contains the command line flags
 type StepGpgCredentialsOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	OutputDir string
 }
@@ -41,7 +42,7 @@ var (
 
 func NewCmdStepGpgCredentials(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepGpgCredentialsOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -54,7 +55,7 @@ func NewCmdStepGpgCredentials(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.OutputDir, optionOutputFile, "o", "", "The output directory")

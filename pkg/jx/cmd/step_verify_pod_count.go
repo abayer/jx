@@ -8,6 +8,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/client/clientset/versioned"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ const appLabel = "app"
 
 // StepVerifyPodCountOptions contains the command line flags
 type StepVerifyPodCountOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	After    int32
 	Pods     int32
@@ -40,7 +41,7 @@ var (
 // NewCmdStepVerifyPodCount performs deployment verification
 func NewCmdStepVerifyPodCount(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepVerifyPodCountOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -54,7 +55,7 @@ func NewCmdStepVerifyPodCount(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

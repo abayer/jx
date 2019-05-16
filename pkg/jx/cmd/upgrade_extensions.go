@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/extensions"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/pkg/errors"
 
@@ -72,7 +73,7 @@ func NewCmdUpgradeExtensions(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdUpgradeExtensionsRepository(commonOpts))

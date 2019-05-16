@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
@@ -33,7 +34,7 @@ func TestStartProtection(t *testing.T) {
 		CommonOptions: &opts.CommonOptions{},
 	}
 
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{},
 		[]runtime.Object{},
 		&gits.GitFake{},

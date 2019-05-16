@@ -2,18 +2,20 @@ package cmd
 
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	tektoncmd "github.com/jenkins-x/jx/pkg/tekton/cmd"
 	"github.com/spf13/cobra"
 )
 
 // StepCreateOptions contains the command line flags
 type StepCreateOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 // NewCmdStepCreate Steps a command object for the "step" command
 func NewCmdStepCreate(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepCreateOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -25,11 +27,11 @@ func NewCmdStepCreate(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdStepCreateJenkinsConfig(commonOpts))
-	cmd.AddCommand(NewCmdStepCreateTask(commonOpts))
+	cmd.AddCommand(tektoncmd.NewCmdStepCreateTask(commonOpts))
 	cmd.AddCommand(NewCmdStepCreateVersionPullRequest(commonOpts))
 	return cmd
 }

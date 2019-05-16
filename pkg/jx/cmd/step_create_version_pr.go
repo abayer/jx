@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jenkins-x/jx/pkg/cloud/gke"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
@@ -46,7 +47,7 @@ var (
 
 // StepCreateVersionPullRequestOptions contains the command line flags
 type StepCreateVersionPullRequestOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Kind               string
 	Name               string
@@ -71,7 +72,7 @@ type StepCreateVersionPullRequestResults struct {
 // NewCmdStepCreateVersionPullRequest Creates a new Command object
 func NewCmdStepCreateVersionPullRequest(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepCreateVersionPullRequestOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -86,7 +87,7 @@ func NewCmdStepCreateVersionPullRequest(commonOpts *opts.CommonOptions) *cobra.C
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

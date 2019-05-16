@@ -14,6 +14,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/jenkins-x/jx/pkg/tests"
 	"github.com/stretchr/testify/assert"
@@ -23,16 +24,16 @@ import (
 )
 
 func TestCreateJenkinsConfig(t *testing.T) {
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
-	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
+	originalKubeCfg, tempKubeCfg, err := util.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 
@@ -67,7 +68,7 @@ func TestCreateJenkinsConfig(t *testing.T) {
 	}
 
 	o := &cmd.StepCreateJenkinsConfigOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{
 				In:  os.Stdin,
 				Out: os.Stdout,
@@ -77,7 +78,7 @@ func TestCreateJenkinsConfig(t *testing.T) {
 		Output: fileName,
 	}
 
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util.ConfigureTestOptionsWithResources(o.CommonOptions,
 		runtimeObjects,
 		nil,
 		gits.NewGitCLI(),

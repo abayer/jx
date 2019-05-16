@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kserving"
 	"github.com/jenkins-x/jx/pkg/kube/services"
 	"github.com/jenkins-x/jx/pkg/table"
@@ -102,7 +103,7 @@ func NewCmdGetApplications(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().BoolVarP(&options.HideUrl, "url", "u", false, "Hide the URLs")

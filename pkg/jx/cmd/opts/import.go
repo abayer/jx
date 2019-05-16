@@ -220,3 +220,14 @@ func (o *CommonOptions) LogImportedProject(isEnvironment bool, gitInfo *gits.Git
 	}
 	log.Info(util.ColorStatus("Note that your first pipeline may take a few minutes to start while the necessary images get downloaded!\n\n"))
 }
+
+const PlaceHolderPrefix = "REPLACE_ME"
+
+const PlaceHolderAppName = PlaceHolderPrefix + "_APP_NAME"
+
+const PlaceHolderGitProvider = PlaceHolderPrefix + "_GIT_PROVIDER"
+
+const PlaceHolderOrg = PlaceHolderPrefix + "_ORG"
+
+const PlaceHolderDockerRegistryOrg = PlaceHolderPrefix + "_DOCKER_REGISTRY_ORG"
+

@@ -7,6 +7,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/version"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ const (
 
 // StepGetVersionChangeSetOptions contains the command line flags
 type StepGetVersionChangeSetOptions struct {
-	StepOptions
+	opts.StepOptions
 	VersionsDir        string
 	VersionsRepository string
 	VersionsGitRef     string
@@ -46,7 +47,7 @@ var (
 // NewCmdStepGetVersionChangeSet create the 'step git envs' command
 func NewCmdStepGetVersionChangeSet(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepGetVersionChangeSetOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -59,7 +60,7 @@ func NewCmdStepGetVersionChangeSet(commonOpts *opts.CommonOptions) *cobra.Comman
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.VersionsRepository, "repo", "r", opts.DefaultVersionsURL, "Jenkins X versions Git repo")

@@ -1,17 +1,17 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"github.com/spf13/cobra"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
-
-	"strconv"
-	"time"
 
 	"github.com/jenkins-x/jx/pkg/log"
 )
@@ -67,7 +67,7 @@ func NewCmdGetLimits(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

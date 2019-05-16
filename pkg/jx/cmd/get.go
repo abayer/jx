@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 
 	"github.com/ghodss/yaml"
@@ -54,7 +55,7 @@ func NewCmdGet(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 		SuggestFor: []string{"list", "ps"},
 	}

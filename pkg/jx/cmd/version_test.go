@@ -9,6 +9,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/version"
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +89,7 @@ func TestDockerImageGetsLabel(t *testing.T) {
 	assert.DirExists(t, versionsDir)
 
 	o := &opts.CommonOptions{}
-	cmd.ConfigureTestOptions(o, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, "", true))
+	util.ConfigureTestOptions(o, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, "", true))
 
 	resolver := &opts.VersionResolver{
 		VersionsDir: versionsDir,

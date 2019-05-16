@@ -16,6 +16,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	util2 "github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/jenkins-x/jx/pkg/testkube"
 	"github.com/jenkins-x/jx/pkg/tests"
@@ -31,16 +32,16 @@ func TestStepBuildPackApply(t *testing.T) {
 
 	tests.SkipForWindows(t, "go-expect does not work on windows")
 
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util2.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util2.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
-	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
+	originalKubeCfg, tempKubeCfg, err := util2.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util2.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 
@@ -55,7 +56,7 @@ func TestStepBuildPackApply(t *testing.T) {
 	require.NoError(t, err)
 
 	o := &cmd.StepBuildPackApplyOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{
 				In:  os.Stdin,
 				Out: os.Stdout,
@@ -65,7 +66,7 @@ func TestStepBuildPackApply(t *testing.T) {
 		Dir: tempDir,
 	}
 
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util2.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{
 			testkube.CreateFakeGitSecret(),
 		},

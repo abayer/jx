@@ -3,12 +3,13 @@ package cmd
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 )
 
 // StepSchedulerConfigOptions contains the command line flags
 type StepSchedulerConfigOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 var (
@@ -22,7 +23,7 @@ var (
 // NewCmdStepSchedulerConfig Steps a command object for the "step" command
 func NewCmdStepSchedulerConfig(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepSchedulerConfigOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -35,7 +36,7 @@ func NewCmdStepSchedulerConfig(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdStepSchedulerConfigApply(commonOpts))

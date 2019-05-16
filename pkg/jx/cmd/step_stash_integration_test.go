@@ -11,22 +11,23 @@ import (
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/tests"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStepStash(t *testing.T) {
-	originalJxHome, tempJxHome, err := cmd.CreateTestJxHomeDir()
+	originalJxHome, tempJxHome, err := util.CreateTestJxHomeDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
+		err := util.CleanupTestJxHomeDir(originalJxHome, tempJxHome)
 		assert.NoError(t, err)
 	}()
-	originalKubeCfg, tempKubeCfg, err := cmd.CreateTestKubeConfigDir()
+	originalKubeCfg, tempKubeCfg, err := util.CreateTestKubeConfigDir()
 	assert.NoError(t, err)
 	defer func() {
-		err := cmd.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
+		err := util.CleanupTestKubeConfigDir(originalKubeCfg, tempKubeCfg)
 		assert.NoError(t, err)
 	}()
 
@@ -36,7 +37,7 @@ func TestStepStash(t *testing.T) {
 	testData := "test_data/step_collect/junit.xml"
 
 	o := &cmd.StepStashOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{},
 		},
 	}
@@ -46,7 +47,7 @@ func TestStepStash(t *testing.T) {
 	o.Pattern = []string{testData}
 	o.ProjectGitURL = "https://github.com/jenkins-x/dummy-repo.git"
 	o.ProjectBranch = "master"
-	cmd.ConfigureTestOptions(o.CommonOptions, &gits.GitFake{}, helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(o.CommonOptions, &gits.GitFake{}, helm_test.NewMockHelmer())
 
 	err = o.Run()
 	assert.NoError(t, err)

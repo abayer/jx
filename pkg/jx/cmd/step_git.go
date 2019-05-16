@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 
 	"fmt"
@@ -15,13 +16,13 @@ import (
 
 // StepGitOptions contains the command line flags
 type StepGitOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 // NewCmdStepGit Steps a command object for the "step" command
 func NewCmdStepGit(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepGitOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -33,7 +34,7 @@ func NewCmdStepGit(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.AddCommand(NewCmdStepGitCredentials(commonOpts))

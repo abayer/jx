@@ -9,6 +9,7 @@ import (
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +24,7 @@ func TestStepVerifyPod(t *testing.T) {
 	commonOpts.Err = os.Stderr
 	options.CommonOptions = &commonOpts
 
-	cmd.ConfigureTestOptions(options.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(options.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
 	err := options.Run()
 	assert.NoError(t, err, "Command failed: %#v", options)
 
@@ -46,7 +47,7 @@ func TestStepVerifyPodDebug(t *testing.T) {
 	commonOpts.Err = os.Stderr
 	options.CommonOptions = &commonOpts
 
-	cmd.ConfigureTestOptions(options.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(options.CommonOptions, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
 	err := options.Run()
 	assert.NoError(t, err, "Command failed: %#v", options)
 

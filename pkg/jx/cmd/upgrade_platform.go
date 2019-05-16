@@ -1,21 +1,21 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/cloud"
 	"github.com/jenkins-x/jx/pkg/config"
 	configio "github.com/jenkins-x/jx/pkg/io"
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"gopkg.in/AlecAivazis/survey.v1"
 	"sigs.k8s.io/yaml"
 
-	"io/ioutil"
-	"strings"
-
 	"github.com/jenkins-x/jx/pkg/kube"
-
-	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -72,7 +72,7 @@ func NewCmdUpgradePlatform(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Namespace, "namespace", "", "", "The Namespace to promote to.")

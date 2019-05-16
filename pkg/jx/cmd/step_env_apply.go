@@ -11,6 +11,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -51,7 +52,7 @@ var (
 func NewCmdStepEnvApply(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepEnvApplyOptions{
 		StepEnvOptions: StepEnvOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: commonOpts,
 			},
 		},
@@ -66,7 +67,7 @@ func NewCmdStepEnvApply(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Namespace, "namespace", "n", "", "The Kubernetes namespace to apply the helm charts to")
@@ -199,7 +200,7 @@ func (o *StepEnvApplyOptions) Run() error {
 
 	stepHelmBuild := &StepHelmBuildOptions{
 		StepHelmOptions: StepHelmOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: o.CommonOptions,
 			},
 			Dir: dir,

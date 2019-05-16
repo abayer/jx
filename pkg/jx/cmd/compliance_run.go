@@ -5,6 +5,7 @@ import (
 	"github.com/heptio/sonobuoy/pkg/config"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -43,7 +44,7 @@ func NewCmdComplianceRun(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Args = args
 			err := options.Run()
 
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

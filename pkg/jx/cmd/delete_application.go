@@ -8,6 +8,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/client/clientset/versioned"
 	"github.com/jenkins-x/jx/pkg/environments"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
@@ -86,7 +87,7 @@ func NewCmdDeleteApplication(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().BoolVarP(&options.IgnoreEnvironments, "no-env", "", false, "Do not remove the application from any of the Environments")

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/jenkins-x/jx/pkg/extensions"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
@@ -67,10 +68,10 @@ func NewCmdGetPlugins(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Complete()
-			CheckErr(err)
+			util.CheckErr(err)
 			err = options.Run()
 
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

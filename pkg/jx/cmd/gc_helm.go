@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/ghodss/yaml"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -59,7 +60,7 @@ func NewCmdGCHelm(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().IntVarP(&options.RevisionHistoryLimit, "revision-history-limit", "", 10, "Minimum number of versions per release to keep")

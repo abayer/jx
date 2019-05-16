@@ -1,4 +1,4 @@
-package cmd_test
+package cmd
 
 import (
 	"io/ioutil"
@@ -10,6 +10,7 @@ import (
 
 	gits_test "github.com/jenkins-x/jx/pkg/gits/mocks"
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/knative/pkg/kmp"
 	uuid "github.com/satori/go.uuid"
@@ -21,7 +22,6 @@ import (
 	"github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
-	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/tekton/tekton_helpers_test"
 	"github.com/jenkins-x/jx/pkg/tests"
@@ -276,7 +276,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 				t.Fatalf("Error loading %s/jenkins-x.yml: %s", caseDir, err)
 			}
 
-			createTask := &cmd.StepCreateTaskOptions{
+			createTask := &StepCreateTaskOptions{
 				Pack:             tt.language,
 				NoReleasePrepare: true,
 				SourceName:       "source",
@@ -290,7 +290,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 				PipelineKind: tt.kind,
 				NoKaniko:     true,
 				Trigger:      string(pipelineapi.PipelineTriggerTypeManual),
-				StepOptions: cmd.StepOptions{
+				StepOptions: opts.StepOptions{
 					CommonOptions: &opts.CommonOptions{
 						ServiceAccount: "tekton-bot",
 					},
@@ -301,7 +301,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 				},
 				DefaultImage: "maven",
 			}
-			cmd.ConfigureTestOptionsWithResources(createTask.CommonOptions, k8sObjects, jxObjects, gits_test.NewMockGitter(), fakeGitProvider, helm_test.NewMockHelmer(), nil)
+			util.ConfigureTestOptionsWithResources(createTask.CommonOptions, k8sObjects, jxObjects, gits_test.NewMockGitter(), fakeGitProvider, helm_test.NewMockHelmer(), nil)
 
 			pipeline, tasks, resources, run, structure, err := createTask.GenerateTektonCRDs(packsDir, projectConfig, projectConfigFile, resolver, "jx")
 			if tt.expectingError {

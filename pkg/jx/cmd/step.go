@@ -2,21 +2,13 @@ package cmd
 
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 )
 
-// GetOptions is the start of the data required to perform the operation.  As new fields are added, add them here instead of
-// referencing the cmd.Flags()
-type StepOptions struct {
-	*opts.CommonOptions
-
-	DisableImport bool
-	OutDir        string
-}
-
 // NewCmdStep Steps a command object for the "step" command
 func NewCmdStep(commonOpts *opts.CommonOptions) *cobra.Command {
-	options := &StepOptions{
+	options := &opts.StepOptions{
 		CommonOptions: commonOpts,
 	}
 
@@ -28,7 +20,7 @@ func NewCmdStep(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 
@@ -66,7 +58,3 @@ func NewCmdStep(commonOpts *opts.CommonOptions) *cobra.Command {
 	return cmd
 }
 
-// Run implements this command
-func (o *StepOptions) Run() error {
-	return o.Cmd.Help()
-}

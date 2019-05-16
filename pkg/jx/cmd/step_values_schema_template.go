@@ -5,6 +5,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ const (
 
 // StepValuesSchemaTemplateOptions contains the command line flags
 type StepValuesSchemaTemplateOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	ConfigMapName string
 	ConfigMapKey  string
@@ -41,7 +42,7 @@ type StepValuesSchemaTemplateOptions struct {
 // NewCmdStepValuesSchemaTemplate Creates a new Command object
 func NewCmdStepValuesSchemaTemplate(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepValuesSchemaTemplateOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -55,7 +56,7 @@ func NewCmdStepValuesSchemaTemplate(commonOpts *opts.CommonOptions) *cobra.Comma
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

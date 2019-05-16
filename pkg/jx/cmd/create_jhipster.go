@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/spf13/cobra"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -57,7 +58,7 @@ func NewCmdCreateJHipster(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	options.addCreateAppFlags(cmd)

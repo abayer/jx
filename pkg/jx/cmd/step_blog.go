@@ -20,6 +20,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/issues"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/reports"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -44,7 +45,7 @@ var (
 
 // StepBlogOptions contains the command line flags
 type StepBlogOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	FromDate                    string
 	ToDate                      string
@@ -77,7 +78,7 @@ type StepBlogState struct {
 // NewCmdStepBlog Creates a new Command object
 func NewCmdStepBlog(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepBlogOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -91,7 +92,7 @@ func NewCmdStepBlog(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

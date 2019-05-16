@@ -8,6 +8,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -17,7 +18,7 @@ import (
 
 // StepReleaseOptions contains the CLI arguments
 type StepReleaseOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	DockerRegistry string
 	Organisation   string
@@ -40,7 +41,7 @@ type StepReleaseOptions struct {
 // NewCmdStep Steps a command object for the "step" command
 func NewCmdStepRelease(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepReleaseOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -52,7 +53,7 @@ func NewCmdStepRelease(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

@@ -2,24 +2,23 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
-
 	"time"
-
-	"fmt"
 
 	"github.com/jenkins-x/jx/pkg/cloud"
 	"github.com/jenkins-x/jx/pkg/features"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/spf13/cobra"
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/AlecAivazis/survey.v1"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"
 )
 
@@ -71,15 +70,15 @@ func NewCmdCreateClusterMinikube(commonOpts *opts.CommonOptions) *cobra.Command 
 		Example: createClusterMinikubeExample,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			err := features.IsEnabled(cmd)
-			CheckErr(err)
+			util.CheckErr(err)
 			err = options.InstallOptions.CheckFeatures()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

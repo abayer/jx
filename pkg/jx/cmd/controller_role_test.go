@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	util2 "github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/kubernetes"
@@ -93,7 +94,7 @@ func TestEnvironmentRoleBinding(t *testing.T) {
 		},
 	}
 
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util2.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{
 			role,
 			roleWithLabel,

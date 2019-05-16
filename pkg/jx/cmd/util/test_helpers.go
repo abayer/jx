@@ -1,4 +1,4 @@
-package cmd
+package util
 
 import (
 	"io/ioutil"
@@ -529,13 +529,6 @@ func AssertPromoteStep(t *testing.T, step *v1.WorkflowStep, expectedEnvironment 
 	if promote != nil {
 		assert.Equal(t, expectedEnvironment, promote.Environment, "environment name")
 	}
-}
-
-func PollGitStatusAndReactToPipelineChanges(t *testing.T, o *ControllerWorkflowOptions, jxClient versioned.Interface, ns string) error {
-	o.ReloadAndPollGitPipelineStatuses(jxClient, ns)
-	err := o.Run()
-	assert.NoError(t, err, "Failed to react to PipelineActivity changes")
-	return err
 }
 
 func dumpFailedActivity(activity *v1.PipelineActivity) {

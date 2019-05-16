@@ -16,8 +16,10 @@ import (
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube/services"
 	"github.com/jenkins-x/jx/pkg/log"
+	"github.com/jenkins-x/jx/pkg/tekton/cmd"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/sirupsen/logrus"
 	"k8s.io/test-infra/prow/github"
@@ -57,7 +59,7 @@ type ControllerEnvironmentOptions struct {
 	PushRef               string
 	Labels                map[string]string
 
-	StepCreateTaskOptions StepCreateTaskOptions
+	StepCreateTaskOptions cmd.StepCreateTaskOptions
 	secret                []byte
 }
 
@@ -84,7 +86,7 @@ func NewCmdControllerEnvironment(commonOpts *opts.CommonOptions) *cobra.Command 
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 
@@ -449,7 +451,7 @@ func (o *ControllerEnvironmentOptions) stepGitCredentials() error {
 		copy := *o.CommonOptions
 		copy.BatchMode = true
 		gsc := &StepGitCredentialsOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: &copy,
 			},
 		}

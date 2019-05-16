@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/jenkins-x/jx/pkg/gits"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/spf13/cobra"
 
@@ -67,7 +68,7 @@ func NewCmdCreateSpring(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	options.addCreateAppFlags(cmd)

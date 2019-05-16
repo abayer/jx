@@ -3,18 +3,17 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	osUser "os/user"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/jenkins-x/jx/pkg/cloud"
 	"github.com/jenkins-x/jx/pkg/features"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"gopkg.in/AlecAivazis/survey.v1"
-
-	osUser "os/user"
-
-	"regexp"
 
 	"github.com/jenkins-x/jx/pkg/cloud/gke"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -98,15 +97,15 @@ func NewCmdCreateClusterGKE(commonOpts *opts.CommonOptions) *cobra.Command {
 		Example: createClusterGKEExample,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			err := features.IsEnabled(cmd)
-			CheckErr(err)
+			util.CheckErr(err)
 			err = options.InstallOptions.CheckFeatures()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

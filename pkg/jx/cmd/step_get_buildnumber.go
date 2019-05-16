@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +22,7 @@ var (
 
 // StepGetBuildNumberOptions contains the command line flags
 type StepGetBuildNumberOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Dir string
 }
@@ -29,7 +30,7 @@ type StepGetBuildNumberOptions struct {
 // NewCmdStepGetBuildNumber Creates a new Command object
 func NewCmdStepGetBuildNumber(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepGetBuildNumberOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -43,7 +44,7 @@ func NewCmdStepGetBuildNumber(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	return cmd

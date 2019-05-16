@@ -9,6 +9,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/cloud"
 	"github.com/jenkins-x/jx/pkg/cloud/amazon"
 	"github.com/jenkins-x/jx/pkg/features"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -71,15 +72,15 @@ func NewCmdCreateClusterEKS(commonOpts *opts.CommonOptions) *cobra.Command {
 		Example: createClusterEKSExample,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			err := features.IsEnabled(cmd)
-			CheckErr(err)
+			util.CheckErr(err)
 			err = options.InstallOptions.CheckFeatures()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

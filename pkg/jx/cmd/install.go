@@ -3,14 +3,16 @@ package cmd
 import (
 	"encoding/base64"
 	"fmt"
-	gkeStorage "github.com/jenkins-x/jx/pkg/cloud/gke/storage"
-	"github.com/jenkins-x/jx/pkg/kube/cluster"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	gkeStorage "github.com/jenkins-x/jx/pkg/cloud/gke/storage"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"github.com/jenkins-x/jx/pkg/kube/cluster"
 
 	"k8s.io/helm/pkg/chartutil"
 
@@ -20,7 +22,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	randomdata "github.com/Pallinder/go-randomdata"
+	"github.com/Pallinder/go-randomdata"
 	"github.com/jenkins-x/jx/pkg/io/secrets"
 	kubevault "github.com/jenkins-x/jx/pkg/kube/vault"
 	"github.com/jenkins-x/jx/pkg/vault"
@@ -45,8 +47,8 @@ import (
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	survey "gopkg.in/AlecAivazis/survey.v1"
-	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/src-d/go-git.v4"
 	core_v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -269,7 +271,7 @@ func NewCmdInstall(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 
@@ -1702,7 +1704,7 @@ func (options *InstallOptions) applyGitOpsDevEnvironmentConfig(gitOpsEnvDir stri
 
 			envApplyOptions := &StepEnvApplyOptions{
 				StepEnvOptions: StepEnvOptions{
-					StepOptions: StepOptions{
+					StepOptions: opts.StepOptions{
 						CommonOptions: options.CommonOptions,
 					},
 				},

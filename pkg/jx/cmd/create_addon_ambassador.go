@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/jenkins-x/jx/pkg/helm"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -62,7 +63,7 @@ func NewCmdCreateAddonAmbassador(commonOpts *opts.CommonOptions) *cobra.Command 
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

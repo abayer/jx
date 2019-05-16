@@ -15,6 +15,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/jx/cmd/bdd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -29,7 +30,7 @@ const (
 
 // StepBDDOptions contains the command line arguments for this command
 type StepBDDOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	InstallOptions InstallOptions
 	Flags          StepBDDFlags
@@ -77,7 +78,7 @@ var (
 
 func NewCmdStepBDD(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepBDDOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 		InstallOptions: CreateInstallOptions(commonOpts),
@@ -91,7 +92,7 @@ func NewCmdStepBDD(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	installOptions := &options.InstallOptions

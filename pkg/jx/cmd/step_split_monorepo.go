@@ -9,6 +9,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/spf13/cobra"
@@ -35,7 +36,7 @@ var (
 
 // StepSplitMonorepoOptions contains the command line flags
 type StepSplitMonorepoOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Glob          string
 	Organisation  string
@@ -49,7 +50,7 @@ type StepSplitMonorepoOptions struct {
 // NewCmdStepSplitMonorepo Creates a new Command object
 func NewCmdStepSplitMonorepo(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepSplitMonorepoOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -63,7 +64,7 @@ func NewCmdStepSplitMonorepo(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Glob, "glob", "g", "*", "The glob pattern to find folders to mirror to separate repositories")

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jenkins-x/jx/pkg/cloud"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	awsvault "github.com/jenkins-x/jx/pkg/cloud/amazon/vault"
 	"github.com/jenkins-x/jx/pkg/cloud/gke"
@@ -56,7 +57,7 @@ func NewCmdDeleteVault(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

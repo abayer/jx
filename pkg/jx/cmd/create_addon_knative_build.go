@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -46,7 +47,7 @@ func NewCmdCreateAddonKnativeBuild(commonOpts *opts.CommonOptions) *cobra.Comman
 		Example: createAddonKnativeBuildExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.username, "username", "u", "", "The pipeline bot username")

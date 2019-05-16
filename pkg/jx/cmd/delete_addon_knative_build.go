@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
-	survey "gopkg.in/AlecAivazis/survey.v1"
+	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
@@ -47,7 +48,7 @@ func NewCmdDeleteAddonKnativeBuild(commonOpts *opts.CommonOptions) *cobra.Comman
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.ReleaseName, optionRelease, "r", kube.DefaultKnativeBuildReleaseName, "The chart release name")

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/cloud"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	version2 "github.com/jenkins-x/jx/pkg/version"
 	"gopkg.in/AlecAivazis/survey.v1"
 
@@ -106,7 +107,7 @@ func NewCmdInit(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

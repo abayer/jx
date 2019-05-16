@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
 	"github.com/jenkins-x/jx/pkg/users"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/gits"
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
-	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/stretchr/testify/assert"
@@ -286,7 +286,7 @@ func prepare(t *testing.T) (*users.GitUserResolver, *gits.FakeProvider, error) {
 	fakeProvider.Type = gits.Fake
 
 	o := opts.CommonOptions{}
-	cmd.ConfigureTestOptionsWithResources(&o,
+	util.ConfigureTestOptionsWithResources(&o,
 		[]runtime.Object{},
 		[]runtime.Object{},
 		&gits.GitFake{},

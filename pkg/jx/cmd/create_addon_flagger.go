@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jenkins-x/jx/pkg/helm"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/log"
 	istiov1alpha3 "github.com/knative/pkg/apis/istio/v1alpha3"
@@ -68,7 +69,7 @@ func NewCmdCreateAddonFlagger(commonOpts *opts.CommonOptions) *cobra.Command {
 		Example: createAddonFlaggerExample,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

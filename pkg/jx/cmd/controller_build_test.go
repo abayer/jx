@@ -7,6 +7,7 @@ import (
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -38,7 +39,7 @@ func TestCompleteBuildSourceInfo(t *testing.T) {
 		},
 	}
 
-	ConfigureTestOptionsWithResources(o.CommonOptions,
+	util.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{
 			getGitHubSecret(),
 		},

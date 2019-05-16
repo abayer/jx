@@ -21,6 +21,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/jenkinsfile/gitresolver"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	jxutils "github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/tekton"
@@ -64,7 +65,7 @@ var (
 
 // StepCreateTaskOptions contains the command line flags
 type StepCreateTaskOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Pack              string
 	Dir               string
@@ -125,7 +126,7 @@ type StepCreateTaskResults struct {
 // NewCmdStepCreateTask Creates a new Command object
 func NewCmdStepCreateTask(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepCreateTaskOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -140,7 +141,7 @@ func NewCmdStepCreateTask(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			jxutils.CheckErr(err)
 		},
 	}
 
@@ -260,8 +261,8 @@ func (o *StepCreateTaskOptions) Run() error {
 				shas = append(shas, sha)
 			}
 
-			mergeOpts := StepGitMergeOptions{
-				StepOptions: StepOptions{
+			mergeOpts := opts.StepGitMergeOptions{
+				StepOptions: opts.StepOptions{
 					CommonOptions: o.CommonOptions,
 				},
 				Dir:        o.Dir,
@@ -1110,10 +1111,10 @@ func (o *StepCreateTaskOptions) createSteps(languageName string, projectConfig *
 	gitInfo := o.GitInfo
 	if gitInfo != nil {
 		gitProviderHost := gitInfo.Host
-		dir = strings.Replace(dir, PlaceHolderAppName, gitInfo.Name, -1)
-		dir = strings.Replace(dir, PlaceHolderOrg, gitInfo.Organisation, -1)
-		dir = strings.Replace(dir, PlaceHolderGitProvider, gitProviderHost, -1)
-		dir = strings.Replace(dir, PlaceHolderDockerRegistryOrg, strings.ToLower(o.GetDockerRegistryOrg(projectConfig, gitInfo)), -1)
+		dir = strings.Replace(dir, opts.PlaceHolderAppName, gitInfo.Name, -1)
+		dir = strings.Replace(dir, opts.PlaceHolderOrg, gitInfo.Organisation, -1)
+		dir = strings.Replace(dir, opts.PlaceHolderGitProvider, gitProviderHost, -1)
+		dir = strings.Replace(dir, opts.PlaceHolderDockerRegistryOrg, strings.ToLower(o.GetDockerRegistryOrg(projectConfig, gitInfo)), -1)
 	} else {
 		log.Warnf("No GitInfo available!\n")
 	}

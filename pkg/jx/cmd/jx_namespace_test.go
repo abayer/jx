@@ -3,11 +3,11 @@ package cmd_test
 import (
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/helm"
-	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 func TestJXNamespace(t *testing.T) {
 	t.Parallel()
 	o := &opts.CommonOptions{}
-	cmd.ConfigureTestOptions(o, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, "", true))
+	util.ConfigureTestOptions(o, gits.NewGitCLI(), helm.NewHelmCLI("helm", helm.V2, "", true))
 
 	kubeClient, ns, err := o.KubeClientAndNamespace()
 	assert.NoError(t, err, "Failed to create kube client")

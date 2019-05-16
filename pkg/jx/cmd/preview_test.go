@@ -9,6 +9,7 @@ import (
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 )
 
 // Constants for some test data to be used.
@@ -75,7 +76,7 @@ preview:
 		},
 	}
 	co := &opts.CommonOptions{}
-	cmd.ConfigureTestOptions(co, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
+	util.ConfigureTestOptions(co, gits_test.NewMockGitter(), helm_test.NewMockHelmer())
 
 	for i, test := range tests {
 		for k, v := range test.env {

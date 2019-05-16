@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
+	"github.com/jenkins-x/jx/pkg/tekton/cmd"
 
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/pkg/errors"
@@ -83,7 +85,7 @@ func NewCmdControllerPipelineRunner(commonOpts *opts.CommonOptions) *cobra.Comma
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 
@@ -201,7 +203,7 @@ func (o *ControllerPipelineRunnerOptions) startPipelineRun(w http.ResponseWriter
 		revision = "master"
 	}
 
-	pr := &StepCreateTaskOptions{}
+	pr := &cmd.StepCreateTaskOptions{}
 	if pj.Type == prowapi.PostsubmitJob {
 		pr.PipelineKind = jenkinsfile.PipelineKindRelease
 	} else {
@@ -302,7 +304,7 @@ func (o *ControllerPipelineRunnerOptions) stepGitCredentials() error {
 		copy := *o.CommonOptions
 		copy.BatchMode = true
 		gsc := &StepGitCredentialsOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: &copy,
 			},
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
@@ -17,7 +18,7 @@ import (
 
 // StepSyntaxSchemaOptions contains the command line flags
 type StepSyntaxSchemaOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Pipeline  bool
 	BuildPack bool
@@ -27,7 +28,7 @@ type StepSyntaxSchemaOptions struct {
 // NewCmdStepSyntaxSchema Steps a command object for the "step" command
 func NewCmdStepSyntaxSchema(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepSyntaxSchemaOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -40,7 +41,7 @@ func NewCmdStepSyntaxSchema(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

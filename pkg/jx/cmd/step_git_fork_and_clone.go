@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 
-	errors "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -16,7 +17,7 @@ import (
 
 // StepGitForkAndCloneOptions contains the command line flags
 type StepGitForkAndCloneOptions struct {
-	StepOptions
+	opts.StepOptions
 	Dir         string
 	BaseRef     string
 	PrintOutDir bool
@@ -42,7 +43,7 @@ var (
 // NewCmdStepGitForkAndClone create the 'step git envs' command
 func NewCmdStepGitForkAndClone(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepGitForkAndCloneOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -55,7 +56,7 @@ func NewCmdStepGitForkAndClone(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

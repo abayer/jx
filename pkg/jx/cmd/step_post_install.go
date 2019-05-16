@@ -6,6 +6,7 @@ import (
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jenkinsfile"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
@@ -21,7 +22,7 @@ import (
 
 // StepPostInstallOptions contains the command line flags
 type StepPostInstallOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	EnvJobCredentials string
 
@@ -49,7 +50,7 @@ var (
 // NewCmdStepPostInstall creates the command object
 func NewCmdStepPostInstall(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepPostInstallOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -63,7 +64,7 @@ func NewCmdStepPostInstall(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

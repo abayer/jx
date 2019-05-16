@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 
 	"github.com/spf13/cobra"
@@ -52,7 +53,7 @@ func NewCmdGetDevPod(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

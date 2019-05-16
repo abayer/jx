@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-
+	"fmt"
 	"strconv"
 
-	"fmt"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
+	"github.com/spf13/cobra"
 
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
@@ -30,7 +30,7 @@ type StepPRCommentFlags struct {
 func NewCmdStepPRComment(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepPRCommentOptions{
 		StepPROptions: StepPROptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: commonOpts,
 			},
 		},
@@ -43,7 +43,7 @@ func NewCmdStepPRComment(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

@@ -1,20 +1,22 @@
 package cmd_test
 
 import (
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	"testing"
+
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/cmd_test_helpers"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/mholt/archiver"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	"testing"
 )
 
 func TestApplyAppsTemplateOverrides(t *testing.T) {
@@ -51,7 +53,7 @@ func TestApplyAppsTemplateOverrides(t *testing.T) {
 	sto := cmd.StepHelmApplyOptions{
 		StepHelmOptions: cmd.StepHelmOptions{
 			Dir: absoluteRepoPath,
-			StepOptions: cmd.StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: testOptions.CommonOptions,
 			},
 		},

@@ -8,6 +8,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/collector"
 	"github.com/jenkins-x/jx/pkg/gits"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	jenkinsv1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/kube"
@@ -23,7 +24,7 @@ import (
 
 // StepStashOptions contains the command line flags
 type StepStashOptions struct {
-	StepOptions
+	opts.StepOptions
 	Pattern         []string
 	Dir             string
 	ToPath          string
@@ -75,7 +76,7 @@ var (
 // NewCmdStepStash creates the CLI command
 func NewCmdStepStash(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepStashOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -89,7 +90,7 @@ func NewCmdStepStash(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

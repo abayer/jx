@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/spf13/cobra"
 
@@ -69,7 +70,7 @@ func NewCmdPrompt(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Prefix, "prefix", "p", "", "The prefix text for the prompt")

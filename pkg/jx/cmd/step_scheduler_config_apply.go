@@ -4,6 +4,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/pipelinescheduler"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -11,7 +12,7 @@ import (
 
 // StepSchedulerConfigApplyOptions contains the command line flags
 type StepSchedulerConfigApplyOptions struct {
-	StepOptions
+	opts.StepOptions
 	Agent string
 	// allow git to be configured externally before a PR is created
 	ConfigureGitCallback gits.ConfigureGitFn
@@ -32,7 +33,7 @@ var (
 // NewCmdStepSchedulerConfigApply Steps a command object for the "step" command
 func NewCmdStepSchedulerConfigApply(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepSchedulerConfigApplyOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -46,7 +47,7 @@ func NewCmdStepSchedulerConfigApply(commonOpts *opts.CommonOptions) *cobra.Comma
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	options.AddCommonFlags(cmd)

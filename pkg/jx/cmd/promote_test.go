@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/petergtz/pegomock"
 
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -62,22 +63,22 @@ func TestPromoteToProductionRun(t *testing.T) {
 	// Check there is no PR for production env yet
 	jxClient, ns, err := promoteOptions.JXClientAndDevNamespace()
 	activities := jxClient.JenkinsV1().PipelineActivities(ns)
-	cmd.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
 
 	// Run the promotion
 	err = promoteOptions.Run()
 	assert.NoError(t, err)
 
 	// The PR has been created
-	cmd.AssertHasPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
-	cmd.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
+	util.AssertHasPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
 	// merge
-	cmd.AssertSetPullRequestMerged(t, testEnv.FakeGitProvider, testEnv.ProdRepo.Owner, testEnv.ProdRepo.Name(), 1)
-	cmd.AssertSetPullRequestComplete(t, testEnv.FakeGitProvider, testEnv.ProdRepo, 1)
+	util.AssertSetPullRequestMerged(t, testEnv.FakeGitProvider, testEnv.ProdRepo.Owner, testEnv.ProdRepo.Name(), 1)
+	util.AssertSetPullRequestComplete(t, testEnv.FakeGitProvider, testEnv.ProdRepo, 1)
 
 	// retry the workflow to actually check the PR was merged and the app is in production
-	cmd.PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
-	cmd.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
+	PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
+	util.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
 	assert.Equal(t, version, promoteOptions.ReleaseInfo.Version)
 
 }
@@ -120,7 +121,7 @@ func TestPromoteToProductionNoMergeRun(t *testing.T) {
 	jxClient, ns, err := promoteOptions.JXClientAndDevNamespace()
 	activities := jxClient.JenkinsV1().PipelineActivities(ns)
 
-	cmd.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
 
 	ch := make(chan int)
 
@@ -132,19 +133,19 @@ func TestPromoteToProductionNoMergeRun(t *testing.T) {
 	}()
 
 	// wait for the PR the be created by the promote command
-	cmd.WaitForPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
-	cmd.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
+	util.WaitForPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
 
 	// merge the PR created by promote command...
-	cmd.AssertSetPullRequestMerged(t, testEnv.FakeGitProvider, testEnv.ProdRepo.Owner, testEnv.ProdRepo.Name(), 1)
-	cmd.AssertSetPullRequestComplete(t, testEnv.FakeGitProvider, testEnv.ProdRepo, 1)
+	util.AssertSetPullRequestMerged(t, testEnv.FakeGitProvider, testEnv.ProdRepo.Owner, testEnv.ProdRepo.Name(), 1)
+	util.AssertSetPullRequestComplete(t, testEnv.FakeGitProvider, testEnv.ProdRepo, 1)
 
 	// ...and wait for the Run routine to finish (it was polling on the PR to be merged)
 	<-ch
 
 	// retry the workflow to actually check the PR was merged and the app is in production
-	cmd.PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
-	cmd.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
+	PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
+	util.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
 
 	//TODO: promoteOptions.ReleaseInfo.Version is empty here. Is this a bug?
 	//assert.Equal(t, "1.0.1", promoteOptions.ReleaseInfo.Version) // default next version
@@ -191,7 +192,7 @@ func TestPromoteToProductionPRPollingRun(t *testing.T) {
 	jxClient, ns, err := promoteOptions.JXClientAndDevNamespace()
 	activities := jxClient.JenkinsV1().PipelineActivities(ns)
 
-	cmd.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasNoPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
 
 	ch := make(chan int)
 
@@ -203,18 +204,18 @@ func TestPromoteToProductionPRPollingRun(t *testing.T) {
 	}()
 
 	// wait for the PR the be created by the promote command
-	cmd.WaitForPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
-	cmd.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
+	util.WaitForPullRequestForEnv(t, activities, testEnv.Activity.Name, "production")
+	util.AssertHasPipelineStatus(t, activities, testEnv.Activity.Name, v1.ActivityStatusTypeRunning)
 
 	// mark latest commit as success tu unblock the promotion (PR will be automatically merged)
-	cmd.SetSuccessCommitStatusInPR(t, testEnv.ProdRepo, 1)
+	util.SetSuccessCommitStatusInPR(t, testEnv.ProdRepo, 1)
 
 	// ...and wait for the Run routine to finish (it was polling on the PR last commit status success to auto-merge)
 	<-ch
 
 	// retry the workflow to actually check the PR was merged and the app is in production
-	cmd.PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
-	cmd.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
+	PollGitStatusAndReactToPipelineChanges(t, testEnv.WorkflowOptions, jxClient, ns)
+	util.AssertHasPromoteStatus(t, activities, testEnv.Activity.Name, "production", v1.ActivityStatusTypeSucceeded)
 
 	//TODO: promoteOptions.ReleaseInfo.Version is empty here. Is this a bug?
 	//assert.Equal(t, "1.0.1", promoteOptions.ReleaseInfo.Version) // default next version
@@ -269,7 +270,7 @@ func prepareInitialPromotionEnv(t *testing.T, productionManualPromotion bool) (*
 		production.Spec.PromotionStrategy = v1.PromotionStrategyTypeManual
 	}
 
-	err := cmd.CreateTestEnvironmentDir(o.CommonOptions)
+	err := util.CreateTestEnvironmentDir(o.CommonOptions)
 	assert.NoError(t, err)
 	configureGitFn := func(dir string, gitInfo *gits.GitRepository, gitter gits.Gitter) error {
 		err := gitter.Init(dir)
@@ -305,7 +306,7 @@ func prepareInitialPromotionEnv(t *testing.T, productionManualPromotion bool) (*
 	workflowName := "default"
 
 	mockHelmer := helm_test.NewMockHelmer()
-	cmd.ConfigureTestOptionsWithResources(o.CommonOptions,
+	util.ConfigureTestOptionsWithResources(o.CommonOptions,
 		[]runtime.Object{},
 		[]runtime.Object{
 			staging,
@@ -333,7 +334,7 @@ func prepareInitialPromotionEnv(t *testing.T, productionManualPromotion bool) (*
 	jxClient, ns, err := o.JXClientAndDevNamespace()
 	assert.NoError(t, err)
 
-	a, err := cmd.CreateTestPipelineActivity(jxClient, ns, testOrgName, testRepoName, "master", "1", workflowName)
+	a, err := util.CreateTestPipelineActivity(jxClient, ns, testOrgName, testRepoName, "master", "1", workflowName)
 	assert.NoError(t, err)
 	if err != nil {
 		return nil, err
@@ -345,36 +346,36 @@ func prepareInitialPromotionEnv(t *testing.T, productionManualPromotion bool) (*
 		return nil, err
 	}
 	activities := jxClient.JenkinsV1().PipelineActivities(ns)
-	cmd.AssertHasPullRequestForEnv(t, activities, a.Name, "staging")
-	cmd.AssertWorkflowStatus(t, activities, a.Name, v1.ActivityStatusTypeRunning)
+	util.AssertHasPullRequestForEnv(t, activities, a.Name, "staging")
+	util.AssertWorkflowStatus(t, activities, a.Name, v1.ActivityStatusTypeRunning)
 
 	// react to the new PR in staging
-	cmd.PollGitStatusAndReactToPipelineChanges(t, o, jxClient, ns)
+	PollGitStatusAndReactToPipelineChanges(t, o, jxClient, ns)
 
 	// lets make sure we don't create a PR for production as its manual
-	cmd.AssertHasNoPullRequestForEnv(t, activities, a.Name, "production")
+	util.AssertHasNoPullRequestForEnv(t, activities, a.Name, "production")
 
 	// merge PR in staging repo
-	if !cmd.AssertSetPullRequestMerged(t, fakeGitProvider, stagingRepo.Owner, stagingRepo.Name(), 1) {
+	if !util.AssertSetPullRequestMerged(t, fakeGitProvider, stagingRepo.Owner, stagingRepo.Name(), 1) {
 		return nil, err
 	}
-	if !cmd.AssertSetPullRequestComplete(t, fakeGitProvider, stagingRepo, 1) {
+	if !util.AssertSetPullRequestComplete(t, fakeGitProvider, stagingRepo, 1) {
 		return nil, err
 	}
 
 	// react to the PR merge in staging
-	cmd.PollGitStatusAndReactToPipelineChanges(t, o, jxClient, ns)
+	PollGitStatusAndReactToPipelineChanges(t, o, jxClient, ns)
 
 	// the pipeline activity succeeded
-	cmd.AssertWorkflowStatus(t, activities, a.Name, v1.ActivityStatusTypeSucceeded)
+	util.AssertWorkflowStatus(t, activities, a.Name, v1.ActivityStatusTypeSucceeded)
 
 	// There is no PR for production, as it is manual
-	cmd.AssertHasNoPullRequestForEnv(t, activities, a.Name, "production")
+	util.AssertHasNoPullRequestForEnv(t, activities, a.Name, "production")
 
 	// Promote to staging succeeded...
-	cmd.AssertHasPromoteStatus(t, activities, a.Name, "staging", v1.ActivityStatusTypeSucceeded)
+	util.AssertHasPromoteStatus(t, activities, a.Name, "staging", v1.ActivityStatusTypeSucceeded)
 	// ...and all promote-to-staging steps were successful
-	cmd.AssertAllPromoteStepsSuccessful(t, activities, a.Name)
+	util.AssertAllPromoteStepsSuccessful(t, activities, a.Name)
 
 	return &TestEnv{
 		Activity:             a,

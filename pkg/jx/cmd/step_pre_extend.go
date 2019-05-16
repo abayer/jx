@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	jenkinsv1client "github.com/jenkins-x/jx/pkg/client/clientset/versioned/typed/jenkins.io/v1"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/jenkins-x/jx/pkg/extensions"
 
@@ -24,7 +25,7 @@ import (
 
 // StepPreBuildOptions contains the command line flags
 type StepPreExtendOptions struct {
-	StepOptions
+	opts.StepOptions
 }
 
 var (
@@ -41,7 +42,7 @@ const extensionsConfigDefaultFile = "jenkins-x-extensions.yaml"
 
 func NewCmdStepPreExtend(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepPreExtendOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -54,7 +55,7 @@ func NewCmdStepPreExtend(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	return cmd

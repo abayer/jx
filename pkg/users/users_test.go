@@ -3,13 +3,13 @@ package users_test
 import (
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/jenkins-x/jx/pkg/users"
 
 	helm_test "github.com/jenkins-x/jx/pkg/helm/mocks"
-	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -33,7 +33,7 @@ func TestResolveUserWithEmptyIdDoesNotCreateEmptyAccountReference(t *testing.T) 
 		},
 	}
 
-	cmd.ConfigureTestOptionsWithResources(&o,
+	util.ConfigureTestOptionsWithResources(&o,
 		[]runtime.Object{},
 		[]runtime.Object{&user},
 		&gits.GitFake{},
@@ -94,7 +94,7 @@ func TestExistingUserIdButNotFoundBySelectErrors(t *testing.T) {
 		},
 	}
 
-	cmd.ConfigureTestOptionsWithResources(&o,
+	util.ConfigureTestOptionsWithResources(&o,
 		[]runtime.Object{},
 		[]runtime.Object{&user1},
 		&gits.GitFake{},

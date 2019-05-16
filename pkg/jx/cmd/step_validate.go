@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jenkins-x/jx/pkg/helm"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 
 	"github.com/blang/semver"
 	"github.com/jenkins-x/jx/pkg/config"
@@ -36,7 +37,7 @@ var (
 
 // StepValidateOptions contains the command line flags
 type StepValidateOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	MinimumJxVersion string
 	Dir              string
@@ -45,7 +46,7 @@ type StepValidateOptions struct {
 // NewCmdStepValidate Creates a new Command object
 func NewCmdStepValidate(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := &StepValidateOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -59,7 +60,7 @@ func NewCmdStepValidate(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.MinimumJxVersion, optionMinJxVersion, "v", "", "The minimum version of the 'jx' command line tool required")

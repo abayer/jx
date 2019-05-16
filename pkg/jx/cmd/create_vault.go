@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/cloud"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube/serviceaccount"
 	"k8s.io/client-go/kubernetes"
 
@@ -85,7 +86,7 @@ func NewCmdCreateVault(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

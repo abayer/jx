@@ -8,6 +8,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -26,7 +27,7 @@ var (
 
 // StepVerifyPodReadyOptions contains the command line flags
 type StepVerifyPodReadyOptions struct {
-	StepOptions
+	opts.StepOptions
 	Debug bool
 }
 
@@ -34,7 +35,7 @@ type StepVerifyPodReadyOptions struct {
 func NewCmdStepVerifyPodReady(commonOpts *opts.CommonOptions) *cobra.Command {
 
 	options := StepVerifyPodReadyOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -48,7 +49,7 @@ func NewCmdStepVerifyPodReady(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 

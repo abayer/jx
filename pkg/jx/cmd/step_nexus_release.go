@@ -5,6 +5,7 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/templates"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ var (
 func NewCmdStepNexusRelease(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepNexusReleaseOptions{
 		StepNexusOptions: StepNexusOptions{
-			StepOptions: StepOptions{
+			StepOptions: opts.StepOptions{
 				CommonOptions: commonOpts,
 			},
 		},
@@ -46,7 +47,7 @@ func NewCmdStepNexusRelease(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().BoolVarP(&options.DropOnFailure, "drop-on-fail", "d", true, "Should we drop the repository on failure")

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/buildnum"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -20,7 +21,7 @@ const (
 
 // StepNextBuildNumberOptions contains the command line flags
 type StepNextBuildNumberOptions struct {
-	StepOptions
+	opts.StepOptions
 
 	Owner      string
 	Repository string
@@ -39,7 +40,7 @@ var (
 
 func NewCmdStepNextBuildNumber(commonOpts *opts.CommonOptions) *cobra.Command {
 	options := StepNextBuildNumberOptions{
-		StepOptions: StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: commonOpts,
 		},
 	}
@@ -53,7 +54,7 @@ func NewCmdStepNextBuildNumber(commonOpts *opts.CommonOptions) *cobra.Command {
 			options.Cmd = cmd
 			options.Args = args
 			err := options.Run()
-			CheckErr(err)
+			util.CheckErr(err)
 		},
 	}
 	cmd.Flags().StringVarP(&options.Owner, optionOwner, "o", "", "The Git repository owner")

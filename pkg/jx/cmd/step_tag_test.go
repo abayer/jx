@@ -1,13 +1,12 @@
 package cmd_test
 
 import (
-	"path/filepath"
-	"strings"
-	"testing"
-
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
+	"testing"
 
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
@@ -37,7 +36,7 @@ func TestStepTagCharts(t *testing.T) {
 	valuesFile := filepath.Join(chartsDir, "values.yaml")
 
 	o := cmd.StepTagOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{},
 		},
 	}

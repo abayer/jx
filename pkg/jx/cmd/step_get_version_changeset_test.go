@@ -10,6 +10,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/helm"
 	"github.com/jenkins-x/jx/pkg/jx/cmd"
 	"github.com/jenkins-x/jx/pkg/jx/cmd/opts"
+	"github.com/jenkins-x/jx/pkg/jx/cmd/util"
 	resources_test "github.com/jenkins-x/jx/pkg/kube/resources/mocks"
 	"github.com/jenkins-x/jx/pkg/version"
 	uuid "github.com/satori/go.uuid"
@@ -36,7 +37,7 @@ func TestStepGetVersionChangeSetOptionsBranch(t *testing.T) {
 	stableBranch := "master"
 	r, fakeStdout, _ := os.Pipe()
 	options := &cmd.StepGetVersionChangeSetOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{},
 		},
 		VersionsDir:   testDir,
@@ -44,7 +45,7 @@ func TestStepGetVersionChangeSetOptionsBranch(t *testing.T) {
 		StableBranch:  stableBranch,
 	}
 	options.CommonOptions.Out = fakeStdout
-	cmd.ConfigureTestOptionsWithResources(options.CommonOptions,
+	util.ConfigureTestOptionsWithResources(options.CommonOptions,
 		[]runtime.Object{},
 		[]runtime.Object{},
 		gits.NewGitLocal(),
@@ -101,7 +102,7 @@ func TestStepGetVersionChangeSetOptionsPR(t *testing.T) {
 	stableBranch := "master"
 	r, fakeStdout, _ := os.Pipe()
 	options := &cmd.StepGetVersionChangeSetOptions{
-		StepOptions: cmd.StepOptions{
+		StepOptions: opts.StepOptions{
 			CommonOptions: &opts.CommonOptions{},
 		},
 		VersionsDir:  testDir,
@@ -109,7 +110,7 @@ func TestStepGetVersionChangeSetOptionsPR(t *testing.T) {
 		StableBranch: stableBranch,
 	}
 	options.CommonOptions.Out = fakeStdout
-	cmd.ConfigureTestOptionsWithResources(options.CommonOptions,
+	util.ConfigureTestOptionsWithResources(options.CommonOptions,
 		[]runtime.Object{},
 		[]runtime.Object{},
 		gits.NewGitLocal(),
