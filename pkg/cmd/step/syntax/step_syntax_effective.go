@@ -392,8 +392,6 @@ func (o *StepSyntaxEffectiveOptions) createPipelineForKind(kind string, lifecycl
 	// if err is reused, maybe we need to switch return types (perhaps upstream in build-pipeline)?
 	ctx := context.Background()
 	if validateErr := parsed.Validate(ctx); validateErr != nil {
-		py, _ := yaml.Marshal(parsed)
-		log.Logger().Warnf("EFFECTIVE THAT FAILED: %s", py)
 		return nil, errors.Wrapf(validateErr, "validation failed for Pipeline")
 	}
 

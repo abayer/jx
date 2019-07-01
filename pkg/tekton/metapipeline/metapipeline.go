@@ -137,10 +137,7 @@ func buildSteps(params CRDCreationParameters) ([]syntax.Step, error) {
 	var steps []syntax.Step
 
 	step := stepEffectivePipeline(params)
-	steps = append(steps, syntax.Step{
-		Name: "git-status",
-		Command: "git remote -v && ls -la && cat jenkins-x.yml",
-	}, step)
+	steps = append(steps, step)
 
 	log.Logger().Debugf("creating pipeline steps for extending apps")
 	for _, app := range params.Apps {
