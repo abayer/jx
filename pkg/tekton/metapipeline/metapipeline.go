@@ -137,10 +137,7 @@ func buildSteps(params CRDCreationParameters) ([]syntax.Step, error) {
 	var steps []syntax.Step
 
 	step := stepEffectivePipeline(params)
-	steps = append(steps, syntax.Step{
-		Name: "git-status",
-		Command: "git status && ls -la",
-	}, step)
+	steps = append(steps, step)
 
 	log.Logger().Debugf("creating pipeline steps for extending apps")
 	for _, app := range params.Apps {
@@ -188,6 +185,7 @@ func stepCreateTektonCRDs(params CRDCreationParameters) syntax.Step {
 	args = append(args, "--trigger", params.Trigger)
 	args = append(args, "--service-account", params.ServiceAccount)
 	args = append(args, "--source", params.SourceDir)
+	args = append(args, "--branch", params.Branch)
 	if params.Context != "" {
 		args = append(args, "--context", params.Context)
 	}
