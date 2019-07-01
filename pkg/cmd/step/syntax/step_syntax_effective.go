@@ -393,7 +393,7 @@ func (o *StepSyntaxEffectiveOptions) createPipelineForKind(kind string, lifecycl
 	ctx := context.Background()
 	if validateErr := parsed.Validate(ctx); validateErr != nil {
 		py, _ := yaml.Marshal(parsed)
-		log.Logger().Warnf("EFFECTIVE THAT FAILED: %s", parsed)
+		log.Logger().Warnf("EFFECTIVE THAT FAILED: %s", py)
 		return nil, errors.Wrapf(validateErr, "validation failed for Pipeline")
 	}
 
