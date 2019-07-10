@@ -33,3 +33,6 @@ pipelinerunner:
     MAVEN_OPTS: "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
     CODECOV_TOKEN: $CODECOV_TOKEN
 
+# Override tekton hopefully
+image:
+  upstreamtag: v0.5.0
