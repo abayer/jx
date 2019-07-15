@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/jenkins-x/jx/pkg/cloud/gke"
 	"github.com/jenkins-x/jx/pkg/tekton"
+	"sigs.k8s.io/yaml"
+
 	"sort"
 	"strings"
 	"time"
@@ -179,6 +181,9 @@ func GetRunningBuildLogs(pa *v1.PipelineActivity, buildName string, kubeClient k
 			_, seen := pipelineRunsLogged[pipelineRun]
 			log.Logger().Warnf("POD: %s, RUN: %s", pod.Name, pipelineRun)
 			params := builds.CreateBuildPodInfo(pod)
+			py, _ := yaml.Marshal(params)
+			log.Logger().Warnf("PARAMS: %s", py)
+			
 			if !seen && params.Organisation == pa.Spec.GitOwner && params.Repository == pa.Spec.GitRepository &&
 				strings.ToLower(params.Branch) == strings.ToLower(pa.Spec.GitBranch) && params.Build == pa.Spec.Build {
 				runsSeenForPods[pipelineRun] = true
