@@ -60,7 +60,7 @@ func GetTektonPipelinesWithActivePipelineActivity(jxClient versioned.Interface, 
 			LabelSelector: labelsFilter,
 		})
 	}
-	log.Logger().Warnf("PR count: %d", len(tektonPRs.Items))
+
 	sort.Slice(tektonPRs.Items, func(i, j int) bool {
 		return tektonPRs.Items[i].CreationTimestamp.After(tektonPRs.Items[j].CreationTimestamp.Time)
 	})
@@ -177,7 +177,7 @@ func GetRunningBuildLogs(pa *v1.PipelineActivity, buildName string, kubeClient k
 			stageName := pod.Labels["jenkins.io/task-stage-name"]
 			pipelineRun := pod.Labels[builds.LabelPipelineRunName]
 			_, seen := pipelineRunsLogged[pipelineRun]
-
+			log.Logger().Warnf("POD: %s, RUN: %s", pod.Name, pipelineRun)
 			params := builds.CreateBuildPodInfo(pod)
 			if !seen && params.Organisation == pa.Spec.GitOwner && params.Repository == pa.Spec.GitRepository &&
 				strings.ToLower(params.Branch) == strings.ToLower(pa.Spec.GitBranch) && params.Build == pa.Spec.Build {
