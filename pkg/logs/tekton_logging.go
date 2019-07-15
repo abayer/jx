@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/jenkins-x/jx/pkg/cloud/gke"
 	"github.com/jenkins-x/jx/pkg/tekton"
-	"sigs.k8s.io/yaml"
 
 	"sort"
 	"strings"
