@@ -415,6 +415,7 @@ func (o *GetBuildLogsOptions) getTektonLogs(kubeClient kubernetes.Interface, tek
 	log.Logger().Warnf("filter: %s", filter)
 	var filteredNames []string
 	for _, n := range names {
+		log.Logger().Warnf("n: %s", n)
 		if strings.Contains(strings.ToLower(n), strings.ToLower(filter)) {
 			filteredNames = append(filteredNames, n)
 		}
