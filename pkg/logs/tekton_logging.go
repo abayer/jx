@@ -111,12 +111,14 @@ func (t TektonLogger) GetTektonPipelinesWithActivePipelineActivity(filters []str
 		if _, exists := prMap[paName]; !exists {
 			prMap[paName] = []*v1alpha12.PipelineRun{}
 		}
+		log.Logger().Warnf("adding pr for %s", paName)
 		prMap[paName] = append(prMap[paName], &p)
 	}
 
 	var names []string
 	for _, pa := range paList.Items {
 		paName := createPipelineActivityName(pa.Labels, pa.Spec.Build)
+		log.Logger().Warnf("checking paName %s", paName)
 		if _, exists := prMap[paName]; exists {
 			hasNonPendingPR := false
 			for _, pr := range prMap[paName] {
