@@ -412,14 +412,14 @@ func (o *GetBuildLogsOptions) getTektonLogs(kubeClient kubernetes.Interface, tek
 	} else {
 		filter = o.BuildFilter.Filter
 	}
-
+	log.Logger().Warnf("filter: %s", filter)
 	var filteredNames []string
 	for _, n := range names {
 		if strings.Contains(strings.ToLower(n), strings.ToLower(filter)) {
 			filteredNames = append(filteredNames, n)
 		}
 	}
-
+	log.Logger().Warnf("filteredNames: %s", filteredNames)
 	if o.BatchMode {
 		if len(filteredNames) > 1 {
 			return false, errors.New("more than one pipeline returned in batch mode, use better filters and try again")
@@ -428,11 +428,12 @@ func (o *GetBuildLogsOptions) getTektonLogs(kubeClient kubernetes.Interface, tek
 			defaultName = filteredNames[0]
 		}
 	}
-
+	log.Logger().Warnf("defaultName: %s", defaultName)
 	name, err := util.PickNameWithDefault(filteredNames, "Which build do you want to view the logs of?: ", defaultName, "", o.In, o.Out, o.Err)
 	if err != nil {
 		return len(filteredNames) == 0, err
 	}
+	log.Logger().Warnf("name: %s", name)
 
 	pa, exists := paMap[name]
 	if !exists {
