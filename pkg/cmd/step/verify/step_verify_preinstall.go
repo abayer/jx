@@ -695,7 +695,7 @@ func (o *StepVerifyPreInstallOptions) verifyStorage(requirements *config.Require
 
 func (o *StepVerifyPreInstallOptions) verifyTLS(requirements *config.RequirementsConfig) error {
 	if !requirements.Ingress.TLS.Enabled {
-		profile := config.LoadActiveInstallProfile()
+		profile := config.LoadActiveInstallProfileType()
 		// silently ignore errors as they most likely because team settings aren't available
 		teamSettings, err := o.TeamSettings()
 		if err == nil {
@@ -707,6 +707,7 @@ func (o *StepVerifyPreInstallOptions) verifyTLS(requirements *config.Requirement
 
 		url := "https://jenkins-x.io/architecture/tls"
 		if profile == config.CloudBeesProfile {
+			// TODO: Move the TLS docs URL into JxInstallProfile
 			url = "https://go.cloudbees.com/docs/cloudbees-jenkins-x-distribution/tls/"
 		}
 		confirm := false

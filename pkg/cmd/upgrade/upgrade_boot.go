@@ -81,6 +81,9 @@ func (o *UpgradeBootOptions) Run() error {
 		}
 	}
 
+	// TODO: Error out here somehow if there's no local profile or the local profile doesn't match the team settings
+	// profile type? Details TBD. Maybe not error out but require confirmation.
+
 	reqsVersionStream, err := o.requirementsVersionStream()
 	if err != nil {
 		return errors.Wrap(err, "failed to get requirements version stream")
@@ -136,12 +139,10 @@ func (o *UpgradeBootOptions) Run() error {
 }
 
 func (o UpgradeBootOptions) determineBootConfigURL(versionStreamURL string) (string, error) {
+	activeProfile := config.LoadActiveInstallProfile()
 	var bootConfigURL string
-	if versionStreamURL == config.DefaultVersionsURL {
-		bootConfigURL = config.DefaultBootRepository
-	}
-	if versionStreamURL == config.DefaultCloudBeesVersionsURL {
-		bootConfigURL = config.DefaultCloudBeesBootRepository
+	if versionStreamURL == activeProfile.VersionsRepository {
+		bootConfigURL = activeProfile.BootRepository
 	}
 
 	if bootConfigURL == "" {

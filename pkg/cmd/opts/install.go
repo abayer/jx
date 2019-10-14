@@ -553,12 +553,13 @@ func (o *CommonOptions) GetLatestJXVersion(resolver *versionstream.VersionResolv
 	}
 	log.Logger().Warnf("could not find the version of jx in the dependency matrix of the version stream at %s", dir)
 
-	if config.LoadActiveInstallProfile() == config.CloudBeesProfile {
+	if config.LoadActiveInstallProfileType() == config.CloudBeesProfile {
 		err := o.InstallRequirements(cloud.GKE)
 		if err != nil {
 			return semver.Version{}, err
 		}
 		gcloudOpts := &gke.GCloud{}
+		// TODO: Move the bucket name into JxInstallProfile, make GetLatestVersionStringCloudBeesBucketURLs generic
 		latestVersionStrings, err := gcloudOpts.ListObjects("artifacts.jenkinsxio.appspot.com", "binaries/jx")
 		if err != nil {
 			return semver.Version{}, nil
@@ -634,7 +635,8 @@ func (o *CommonOptions) InstallJx(upgrade bool, version string) error {
 		extension = "zip"
 	}
 	clientURL := ""
-	if config.LoadActiveInstallProfile() == config.CloudBeesProfile {
+	// TODO: Move the base for this at least into JxInstallProfile
+	if config.LoadActiveInstallProfileType() == config.CloudBeesProfile {
 		clientURL = fmt.Sprintf("https://storage.googleapis.com/artifacts.jenkinsxio.appspot.com/binaries/jx/%s/"+binary+"-%s-%s.%s", version, runtime.GOOS, runtime.GOARCH, extension)
 
 	} else {

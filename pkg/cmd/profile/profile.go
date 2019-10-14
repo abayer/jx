@@ -10,7 +10,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/jenkins-x/jx/pkg/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/cmd/templates"
@@ -55,6 +55,9 @@ func NewCmdProfile(commonOpts *opts.CommonOptions) *cobra.Command {
 	}
 	return cmd
 }
+
+// TODO: Junk this entirely or rework it to allow switching between defined profiles. Would also need a way to add profiles
+// easily.
 
 // Run implements this command
 func (o *Profile) Run() error {

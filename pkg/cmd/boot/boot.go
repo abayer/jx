@@ -130,15 +130,17 @@ func (o *BootOptions) Run() error {
 		gitRef = o.GitRef
 	}
 
-	if config.LoadActiveInstallProfile() == config.CloudBeesProfile && o.GitURL == "" {
-		gitURL = config.DefaultCloudBeesBootRepository
+	activeProfile := config.LoadActiveInstallProfile()
+
+	if activeProfile.BootRepository != "" && o.GitURL == "" {
+		gitURL = activeProfile.BootRepository
 	}
-	if config.LoadActiveInstallProfile() == config.CloudBeesProfile && o.VersionStreamURL == config.DefaultVersionsURL {
-		o.VersionStreamURL = config.DefaultCloudBeesVersionsURL
+	if activeProfile.VersionsRepository != "" && o.VersionStreamURL == config.DefaultVersionsURL {
+		o.VersionStreamURL = activeProfile.VersionsRepository
 
 	}
-	if config.LoadActiveInstallProfile() == config.CloudBeesProfile && o.VersionStreamRef == config.DefaultVersionsRef {
-		o.VersionStreamRef = config.DefaultCloudBeesVersionsRef
+	if activeProfile.VersionsBranch != "" && o.VersionStreamRef == config.DefaultVersionsRef {
+		o.VersionStreamRef = activeProfile.VersionsBranch
 
 	}
 	if gitURL == "" {
@@ -361,13 +363,9 @@ func (o *BootOptions) defaultVersionStream(requirements *config.RequirementsConf
 	// If we still don't have a complete version stream ref then we better set to a default
 	if requirements.VersionStream.URL == "" || requirements.VersionStream.Ref == "" {
 		log.Logger().Warnf("Incomplete version stream reference %s @ %s", requirements.VersionStream.URL, requirements.VersionStream.Ref)
-		if config.LoadActiveInstallProfile() == config.CloudBeesProfile {
-			o.VersionStreamRef = config.DefaultCloudBeesVersionsRef
-			o.VersionStreamURL = config.DefaultVersionsURL
-		} else {
-			o.VersionStreamRef = config.DefaultVersionsRef
-			o.VersionStreamURL = config.DefaultVersionsURL
-		}
+		activeProfile := config.LoadActiveInstallProfile()
+		o.VersionStreamRef = activeProfile.VersionsBranch
+		o.VersionStreamURL = activeProfile.VersionsRepository
 		log.Logger().Infof("Setting version stream reference to default %s @ %s", requirements.VersionStream.URL, requirements.VersionStream.Ref)
 	}
 }
