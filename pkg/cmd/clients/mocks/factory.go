@@ -4,10 +4,6 @@
 package clients_test
 
 import (
-	io "io"
-	"reflect"
-	"time"
-
 	versioned "github.com/banzaicloud/bank-vaults/operator/pkg/client/clientset/versioned"
 	client "github.com/heptio/sonobuoy/pkg/client"
 	dynamic "github.com/heptio/sonobuoy/pkg/dynamic"
@@ -26,11 +22,14 @@ import (
 	versioned3 "github.com/knative/serving/pkg/client/clientset/versioned"
 	pegomock "github.com/petergtz/pegomock"
 	versioned4 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
+	io "io"
 	v1 "k8s.io/api/core/v1"
 	clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 	versioned5 "k8s.io/metrics/pkg/client/clientset/versioned"
+	"reflect"
+	"time"
 )
 
 type MockFactory struct {

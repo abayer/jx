@@ -4,11 +4,10 @@
 package auth_test
 
 import (
-	"reflect"
-	"time"
-
 	auth "github.com/jenkins-x/jx/pkg/auth"
 	pegomock "github.com/petergtz/pegomock"
+	"reflect"
+	"time"
 )
 
 type MockConfigSaver struct {

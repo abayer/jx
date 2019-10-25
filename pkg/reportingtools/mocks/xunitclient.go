@@ -4,11 +4,10 @@
 package reportingtools_test
 
 import (
-	"reflect"
-	"time"
-
 	opts "github.com/jenkins-x/jx/pkg/cmd/opts"
 	pegomock "github.com/petergtz/pegomock"
+	"reflect"
+	"time"
 )
 
 type MockXUnitClient struct {

@@ -4,10 +4,9 @@
 package resources_test
 
 import (
+	pegomock "github.com/petergtz/pegomock"
 	"reflect"
 	"time"
-
-	pegomock "github.com/petergtz/pegomock"
 )
 
 type MockInstaller struct {

@@ -4,10 +4,9 @@
 package gits_test
 
 import (
+	pegomock "github.com/petergtz/pegomock"
 	"reflect"
 	"time"
-
-	pegomock "github.com/petergtz/pegomock"
 )
 
 type MockOrganisationChecker struct {

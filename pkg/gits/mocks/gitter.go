@@ -4,14 +4,13 @@
 package gits_test
 
 import (
-	io "io"
-	"reflect"
-	"time"
-
 	auth "github.com/jenkins-x/jx/pkg/auth"
 	gits "github.com/jenkins-x/jx/pkg/gits"
 	pegomock "github.com/petergtz/pegomock"
 	config "gopkg.in/src-d/go-git.v4/config"
+	io "io"
+	"reflect"
+	"time"
 )
 
 type MockGitter struct {
@@ -398,29 +397,6 @@ func (mock *MockGitter) DeleteRemoteBranch(_param0 string, _param1 string, _para
 		}
 	}
 	return ret0
-}
-
-func (mock *MockGitter) Describe(_param0 string, _param1 bool, _param2 string, _param3 string, _param4 bool) (string, string, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockGitter().")
-	}
-	params := []pegomock.Param{_param0, _param1, _param2, _param3, _param4}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("Describe", params, []reflect.Type{reflect.TypeOf((*string)(nil)).Elem(), reflect.TypeOf((*string)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 string
-	var ret1 string
-	var ret2 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(string)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(string)
-		}
-		if result[2] != nil {
-			ret2 = result[2].(error)
-		}
-	}
-	return ret0, ret1, ret2
 }
 
 func (mock *MockGitter) Diff(_param0 string) (string, error) {
@@ -2373,49 +2349,6 @@ func (c *MockGitter_DeleteRemoteBranch_OngoingVerification) GetAllCapturedArgume
 		_param2 = make([]string, len(params[2]))
 		for u, param := range params[2] {
 			_param2[u] = param.(string)
-		}
-	}
-	return
-}
-
-func (verifier *VerifierMockGitter) Describe(_param0 string, _param1 bool, _param2 string, _param3 string, _param4 bool) *MockGitter_Describe_OngoingVerification {
-	params := []pegomock.Param{_param0, _param1, _param2, _param3, _param4}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "Describe", params, verifier.timeout)
-	return &MockGitter_Describe_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type MockGitter_Describe_OngoingVerification struct {
-	mock              *MockGitter
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *MockGitter_Describe_OngoingVerification) GetCapturedArguments() (string, bool, string, string, bool) {
-	_param0, _param1, _param2, _param3, _param4 := c.GetAllCapturedArguments()
-	return _param0[len(_param0)-1], _param1[len(_param1)-1], _param2[len(_param2)-1], _param3[len(_param3)-1], _param4[len(_param4)-1]
-}
-
-func (c *MockGitter_Describe_OngoingVerification) GetAllCapturedArguments() (_param0 []string, _param1 []bool, _param2 []string, _param3 []string, _param4 []bool) {
-	params := pegomock.GetGenericMockFrom(c.mock).GetInvocationParams(c.methodInvocations)
-	if len(params) > 0 {
-		_param0 = make([]string, len(params[0]))
-		for u, param := range params[0] {
-			_param0[u] = param.(string)
-		}
-		_param1 = make([]bool, len(params[1]))
-		for u, param := range params[1] {
-			_param1[u] = param.(bool)
-		}
-		_param2 = make([]string, len(params[2]))
-		for u, param := range params[2] {
-			_param2[u] = param.(string)
-		}
-		_param3 = make([]string, len(params[3]))
-		for u, param := range params[3] {
-			_param3[u] = param.(string)
-		}
-		_param4 = make([]bool, len(params[4]))
-		for u, param := range params[4] {
-			_param4[u] = param.(bool)
 		}
 	}
 	return

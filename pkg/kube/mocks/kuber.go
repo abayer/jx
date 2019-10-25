@@ -4,12 +4,11 @@
 package kube_test
 
 import (
-	"reflect"
-	"time"
-
 	pegomock "github.com/petergtz/pegomock"
 	clientcmd "k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api"
+	"reflect"
+	"time"
 )
 
 type MockKuber struct {

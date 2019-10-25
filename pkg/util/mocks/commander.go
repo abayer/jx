@@ -4,11 +4,10 @@
 package util_test
 
 import (
-	"reflect"
-	"time"
-
 	backoff "github.com/cenkalti/backoff"
 	pegomock "github.com/petergtz/pegomock"
+	"reflect"
+	"time"
 )
 
 type MockCommander struct {
