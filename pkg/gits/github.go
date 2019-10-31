@@ -130,6 +130,7 @@ func (p *GitHubProvider) ListRepositoriesForUser(user string) ([]*GitRepository,
 	answer := []*GitRepository{}
 	options := &github.RepositoryListOptions{
 		Affiliation: "owner",
+		Visibility: "private",
 		ListOptions: github.ListOptions{
 			Page:    0,
 			PerPage: pageSize,
@@ -141,6 +142,7 @@ func (p *GitHubProvider) ListRepositoriesForUser(user string) ([]*GitRepository,
 		if err != nil {
 			options := &github.RepositoryListOptions{
 				Affiliation: "owner",
+				Visibility: "private",
 				ListOptions: github.ListOptions{
 					Page:    0,
 					PerPage: pageSize,
