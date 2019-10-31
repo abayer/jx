@@ -151,7 +151,9 @@ func (p *GitHubProvider) ListRepositoriesForUser(user string) ([]*GitRepository,
 
 		}
 		for _, repo := range repos {
-			answer = append(answer, toGitHubRepo(asText(repo.Name), owner, repo))
+			if repo.CreatedAt != nil && repo.CreatedAt.Before(time.Now().AddDate(0, 0, -7)) {
+				answer = append(answer, toGitHubRepo(asText(repo.Name), owner, repo))
+			}
 		}
 		if len(repos) < pageSize || len(repos) == 0 {
 			break
