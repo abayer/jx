@@ -129,6 +129,7 @@ func (p *GitHubProvider) ListRepositoriesForUser(user string) ([]*GitRepository,
 	owner := user
 	answer := []*GitRepository{}
 	options := &github.RepositoryListOptions{
+		Affiliation: "owner",
 		ListOptions: github.ListOptions{
 			Page:    0,
 			PerPage: pageSize,
@@ -136,15 +137,16 @@ func (p *GitHubProvider) ListRepositoriesForUser(user string) ([]*GitRepository,
 	}
 
 	for {
-		repos, _, err := p.Client.Repositories.List(p.Context, owner, options)
+		repos, _, err := p.Client.Repositories.List(p.Context, "", options)
 		if err != nil {
 			options := &github.RepositoryListOptions{
+				Affiliation: "owner",
 				ListOptions: github.ListOptions{
 					Page:    0,
 					PerPage: pageSize,
 				},
 			}
-			repos, _, err = p.Client.Repositories.List(p.Context, owner, options)
+			repos, _, err = p.Client.Repositories.List(p.Context, "", options)
 			if err != nil {
 				return answer, err
 			}
