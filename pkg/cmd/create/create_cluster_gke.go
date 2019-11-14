@@ -38,6 +38,7 @@ type CreateClusterGKEFlags struct {
 	ClusterIpv4Cidr          string `mapstructure:"cluster-ipv4-cidr"`
 	ClusterVersion           string `mapstructure:"kubernetes-version"`
 	DiskSize                 string `mapstructure:"disk-size"`
+	DiskType                 string `mapstructure:"disk-type"`
 	ImageType                string `mapstructure:"image-type"`
 	MachineType              string `mapstructure:"machine-type"`
 	MinNumOfNodes            string `mapstructure:"min-num-nodes"`
@@ -70,6 +71,7 @@ const (
 	zoneFlagName              = "zone"
 	regionFlagName            = "region"
 	diskSizeFlagName          = "disk-size"
+	diskTypeFlagName          = "disk-type"
 	imageTypeFlagName         = "image-type"
 	clusterIpv4CidrFlagName   = "cluster-ipv4-cidr"
 	enableAutoupgradeFlagName = "enable-autoupgrade"
@@ -134,6 +136,7 @@ func NewCmdCreateClusterGKE(commonOpts *opts.CommonOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&options.Flags.ClusterIpv4Cidr, clusterIpv4CidrFlagName, "", "", "The IP address range for the pods in this cluster in CIDR notation (e.g. 10.0.0.0/14)")
 	cmd.Flags().StringVarP(&options.Flags.ClusterVersion, optionKubernetesVersion, "v", "", "The Kubernetes version to use for the master and nodes. Defaults to server-specified")
 	cmd.Flags().StringVarP(&options.Flags.DiskSize, diskSizeFlagName, "d", "", "Size in GB for node VM boot disks. Defaults to 100GB")
+	cmd.Flags().StringVarP(&options.Flags.DiskType, diskTypeFlagName, "", "", "Disk type for node VM boot disks. Defaults to pd-standard")
 	cmd.Flags().BoolVarP(&options.Flags.AutoUpgrade, enableAutoupgradeFlagName, "", false, "Sets autoupgrade feature for a cluster's default node-pool(s)")
 	cmd.Flags().StringVarP(&options.Flags.MachineType, machineTypeFlagName, "m", "", "The type of machine to use for nodes")
 	cmd.Flags().StringVarP(&options.Flags.MinNumOfNodes, minNodesFlagName, "", "", "The minimum number of nodes to be created in each of the cluster's zones")
@@ -161,6 +164,7 @@ func bindGKEConfigToFlags(cmd *cobra.Command) {
 	_ = viper.BindPFlag(clusterConfigKey(clusterIpv4CidrFlagName), cmd.Flags().Lookup(clusterIpv4CidrFlagName))
 	_ = viper.BindPFlag(clusterConfigKey(optionKubernetesVersion), cmd.Flags().Lookup(optionKubernetesVersion))
 	_ = viper.BindPFlag(clusterConfigKey(diskSizeFlagName), cmd.Flags().Lookup(diskSizeFlagName))
+	_ = viper.BindPFlag(clusterConfigKey(diskTypeFlagName), cmd.Flags().Lookup(diskTypeFlagName))
 	_ = viper.BindPFlag(clusterConfigKey(enableAutoupgradeFlagName), cmd.Flags().Lookup(enableAutoupgradeFlagName))
 	_ = viper.BindPFlag(clusterConfigKey(machineTypeFlagName), cmd.Flags().Lookup(machineTypeFlagName))
 	_ = viper.BindPFlag(clusterConfigKey(minNodesFlagName), cmd.Flags().Lookup(minNodesFlagName))
@@ -533,6 +537,10 @@ func (o *CreateClusterGKEOptions) createClusterGKE() error {
 
 	if o.Flags.DiskSize != "" {
 		args = append(args, "--disk-size", o.Flags.DiskSize)
+	}
+
+	if o.Flags.DiskType != "" {
+		args = append(args, "--disk-type", o.Flags.DiskType)
 	}
 
 	if o.Flags.ClusterIpv4Cidr != "" {
