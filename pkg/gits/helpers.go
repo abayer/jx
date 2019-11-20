@@ -15,6 +15,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
+	jxConfig "github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/util"
 
 	"github.com/jenkins-x/jx/pkg/log"
@@ -930,4 +931,32 @@ func RefIsBranch(dir string, ref string, gitter Gitter) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// MergeRequirementsBetweenRefs attempts to merge the requirements file from the given git ref in the given git repo with the
+// provided requirements struct.
+func MergeRequirementsBetweenRefs(gitter Gitter, dir string, toRef string, fromRef string) (*jxConfig.RequirementsConfig, error) {
+	err := gitter.Checkout(dir, fromRef)
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't checkout fromRef %s in dir %s to merge jx-requirements.yaml", fromRef, dir)
+	}
+	fromReqs, _, err := jxConfig.LoadRequirementsConfig(dir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't load jx-requirements.yaml from ref %s in dir %s to merge from", fromRef, dir)
+	}
+
+	err = gitter.Checkout(dir, toRef)
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't checkout toRef %s in dir %s to merge jx-requirements.yaml", toRef, dir)
+	}
+	toReqs, _, err := jxConfig.LoadRequirementsConfig(dir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't load jx-requirements.yaml from ref %s in dir %s to merge to", toRef, dir)
+	}
+
+	err = toReqs.Merge(fromReqs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to merge jx-requirements.yaml from ref %s to ref %s in dir %s with current requirements", fromRef, toRef, dir)
+	}
+	return toReqs, nil
 }

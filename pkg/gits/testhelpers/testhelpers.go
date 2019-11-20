@@ -105,6 +105,16 @@ func Revlist(fail func(string, ...int), repoDir string, maxCount int, commit str
 	return GitCmd(fail, repoDir, args...)
 }
 
+// StashPush creates a new stash
+func StashPush(fail func(string, ...int), repoDir string) {
+	GitCmd(fail, repoDir, "stash", "push")
+}
+
+// StashPop pops the stash
+func StashPop(fail func(string, ...int), repoDir string) {
+	GitCmd(fail, repoDir, "stash", "pop")
+}
+
 // GitCmd runs a git command with arguments in the specified git repository
 func GitCmd(fail func(string, ...int), repoDir string, args ...string) string {
 	cmd := util.Command{

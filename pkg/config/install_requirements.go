@@ -3,21 +3,19 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
-
-	"github.com/imdario/mergo"
-	"github.com/jenkins-x/jx/pkg/cloud/gke"
-
-	"github.com/ghodss/yaml"
-	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
-	"github.com/jenkins-x/jx/pkg/cloud"
-	"github.com/jenkins-x/jx/pkg/log"
-	"github.com/pkg/errors"
-
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
+
+	"github.com/ghodss/yaml"
+	"github.com/imdario/mergo"
+	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
+	"github.com/jenkins-x/jx/pkg/cloud"
+	"github.com/jenkins-x/jx/pkg/cloud/gke"
+	"github.com/jenkins-x/jx/pkg/log"
+	"github.com/pkg/errors"
 
 	"github.com/jenkins-x/jx/pkg/util"
 )
@@ -653,19 +651,28 @@ func (t environmentsSliceTransformer) Transformer(typ reflect.Type) func(dst, sr
 	return nil
 }
 
-// MergeSave attempts to merge the provided RequirementsConfig with the caller's data.
-// It does so overriding values in the source struct with non-zero values from the provided struct
-// it defines non-zero per property and not for a while embedded struct, meaning that nested properties
-// in embedded structs should also be merged correctly.
-// if a slice is added a transformer will be needed to handle correctly merging the contained values
+// MergeSave attempts to merge the provided RequirementsConfig with the caller's data and save the result.
 func (c *RequirementsConfig) MergeSave(src *RequirementsConfig, requirementsFileName string) error {
-	err := mergo.Merge(c, src, mergo.WithOverride, mergo.WithTransformers(environmentsSliceTransformer{}))
+	err := c.Merge(src)
 	if err != nil {
-		return errors.Wrap(err, "error merging jx-requirements.yml files")
+		return err
 	}
 	err = c.SaveConfig(requirementsFileName)
 	if err != nil {
 		return errors.Wrapf(err, "error saving the merged jx-requirements.yml files to %s", requirementsFileName)
+	}
+	return nil
+}
+
+// Merge attempts to merge the provided RequirementsConfig with the caller's data.
+// It does so overriding values in the source struct with non-zero values from the provided struct
+// it defines non-zero per property and not for a while embedded struct, meaning that nested properties
+// in embedded structs should also be merged correctly.
+// if a slice is added a transformer will be needed to handle correctly merging the contained values
+func (c *RequirementsConfig) Merge(src *RequirementsConfig) error {
+	err := mergo.Merge(c, src, mergo.WithOverride, mergo.WithTransformers(environmentsSliceTransformer{}))
+	if err != nil {
+		return errors.Wrap(err, "error merging jx-requirements.yml files")
 	}
 	return nil
 }

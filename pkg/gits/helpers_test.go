@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/config"
+	config_test_helpers "github.com/jenkins-x/jx/pkg/config/testhelpers"
 	"github.com/jenkins-x/jx/pkg/util"
 
 	"github.com/jenkins-x/jx/pkg/tests"
@@ -2399,4 +2401,69 @@ func TestIsCouldntFindRemoteRefErrorHandlesUppercaseRef(t *testing.T) {
 	error := errors.New(" fatal: couldn't find remote ref add-app-your-app-0.0.0-SNAPSHOT-PR-1234-1:")
 	ref := "add-app-your-app-0.0.0-SNAPSHOT-PR-1234-1"
 	assert.True(t, gits.IsCouldntFindRemoteRefError(error, ref))
+}
+
+func TestMergeRequirementsBetweenRefs(t *testing.T) {
+	t.Parallel()
+
+	testCases := config_test_helpers.GetMergeTestCases(t)
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			gitter, repoDir, toRef, fromRef := prepRepoForMergeRequirementsBetweenRefs(t, tc.Original, tc.Changed)
+			mergedReqs, err := gits.MergeRequirementsBetweenRefs(gitter, repoDir, toRef, fromRef)
+			assert.NoError(t, err)
+			tc.ValidationFunc(mergedReqs, tc.Changed)
+		})
+	}
+}
+
+func prepRepoForMergeRequirementsBetweenRefs(t *testing.T, toReqs *config.RequirementsConfig, fromReqs *config.RequirementsConfig) (gits.Gitter, string, string, string) {
+	gitter := gits.NewGitCLI()
+
+	repoDir, err := ioutil.TempDir("", "merge-reqs-between-refs-")
+	assert.NoError(t, err)
+	err = gitter.Init(repoDir)
+	assert.NoError(t, err)
+
+	reqsPath := filepath.Join(repoDir, config.RequirementsConfigFileName)
+
+	baseReqs := config.NewRequirementsConfig()
+	err = baseReqs.SaveConfig(reqsPath)
+	assert.NoError(t, err)
+
+	err = gitter.Add(repoDir, config.RequirementsConfigFileName)
+	assert.NoError(t, err)
+	err = gitter.CommitDir(repoDir, "Initial Commit")
+	assert.NoError(t, err)
+
+	// Create toReqs on a branch
+	err = gitter.CreateBranch(repoDir, "to-reqs")
+	assert.NoError(t, err)
+	// Save the toReqs, commit it, and record the sha.
+	err = toReqs.SaveConfig(reqsPath)
+	assert.NoError(t, err)
+	err = gitter.Add(repoDir, config.RequirementsConfigFileName)
+	assert.NoError(t, err)
+	err = gitter.CommitDir(repoDir, "Requirements to merge to")
+	assert.NoError(t, err)
+	toRef, err := gitter.GetLatestCommitSha(repoDir)
+	assert.NoError(t, err)
+
+	// Checkout master again, and create a branch for fromReqs
+	err = gitter.Checkout(repoDir, "master")
+	assert.NoError(t, err)
+	err = gitter.CreateBranch(repoDir, "from-reqs")
+	assert.NoError(t, err)
+	// Save the fromReqs, commit it, and record the sha.
+	err = fromReqs.SaveConfig(reqsPath)
+	assert.NoError(t, err)
+	err = gitter.Add(repoDir, config.RequirementsConfigFileName)
+	assert.NoError(t, err)
+	err = gitter.CommitDir(repoDir, "Requirements to merge from")
+	assert.NoError(t, err)
+	fromRef, err := gitter.GetLatestCommitSha(repoDir)
+	assert.NoError(t, err)
+
+	return gitter, repoDir, toRef, fromRef
 }

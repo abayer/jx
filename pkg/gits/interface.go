@@ -249,6 +249,8 @@ type Gitter interface {
 	StashPush(dir string) error
 	StashPop(dir string) error
 
+	GetConflicts(dir string) ([]string, error)
+
 	Remove(dir, fileName string) error
 	RemoveForce(dir, fileName string) error
 	CleanForce(dir, fileName string) error

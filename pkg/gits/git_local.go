@@ -490,6 +490,11 @@ func (g *GitLocal) StashPop(dir string) error {
 	return g.GitCLI.StashPop(dir)
 }
 
+// GetConflicts lists unmerged files with conflicts
+func (g *GitLocal) GetConflicts(dir string) ([]string, error) {
+	return g.GitCLI.GetConflicts(dir)
+}
+
 // CloneBare does nothing
 func (g *GitLocal) CloneBare(dir string, url string) error {
 	return nil

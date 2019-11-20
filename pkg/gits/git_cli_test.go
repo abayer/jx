@@ -583,6 +583,68 @@ var _ = Describe("Git CLI", func() {
 			})
 		})
 	})
+
+	Describe("#GetConflicts", func() {
+		var (
+			headMinusOneSha string
+			headSha         string
+		)
+		BeforeEach(func() {
+			testhelpers.WriteFile(Fail, repoDir, "a.txt", "a")
+			testhelpers.Add(Fail, repoDir)
+			headMinusOneSha = testhelpers.Commit(Fail, repoDir, "commit a")
+			testhelpers.WriteFile(Fail, repoDir, "a.txt", "b")
+			testhelpers.Add(Fail, repoDir)
+			headSha = testhelpers.Commit(Fail, repoDir, "commit a 2")
+		})
+
+		Context("when there are no changed files", func() {
+			Specify("the list is empty and there is no error", func() {
+				conflicts, err := git.GetConflicts(repoDir)
+				Expect(err).Should(BeNil())
+				Expect(conflicts).Should(BeEmpty())
+			})
+		})
+
+		Context("when there is a changed file but no conflicts", func() {
+			Specify("the list is empty and there is no error", func() {
+				testhelpers.WriteFile(Fail, repoDir, "a.txt", "c")
+				conflicts, err := git.GetConflicts(repoDir)
+				Expect(err).Should(BeNil())
+				Expect(conflicts).Should(BeEmpty())
+			})
+		})
+
+		Context("when there is a popped stash file but no conflicts", func() {
+			Specify("the list is empty and there is no error", func() {
+				testhelpers.Checkout(Fail, repoDir, headMinusOneSha)
+				testhelpers.WriteFile(Fail, repoDir, "b.txt", "banana")
+				testhelpers.Add(Fail, repoDir)
+				testhelpers.StashPush(Fail, repoDir)
+				testhelpers.Checkout(Fail, repoDir, headSha)
+				testhelpers.StashPop(Fail, repoDir)
+				conflicts, err := git.GetConflicts(repoDir)
+				Expect(err).Should(BeNil())
+				Expect(conflicts).Should(BeEmpty())
+			})
+		})
+
+		Context("when there is a popped stash containing a non-conflicting file and a file with conflicts", func() {
+			Specify("the list contains the conflicting file and there is no error", func() {
+				testhelpers.Checkout(Fail, repoDir, headMinusOneSha)
+				testhelpers.WriteFile(Fail, repoDir, "a.txt", "banana")
+				testhelpers.WriteFile(Fail, repoDir, "b.txt", "apple")
+				testhelpers.Add(Fail, repoDir)
+				testhelpers.StashPush(Fail, repoDir)
+				testhelpers.Checkout(Fail, repoDir, headSha)
+				// No fail function passed because we expect there to be an error popping the stash
+				testhelpers.StashPop(func(s string, i ...int) {}, repoDir)
+				conflicts, err := git.GetConflicts(repoDir)
+				Expect(err).Should(BeNil())
+				Expect(conflicts).Should(ConsistOf("a.txt"))
+			})
+		})
+	})
 })
 
 func TestTags(t *testing.T) {

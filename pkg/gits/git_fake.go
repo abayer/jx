@@ -636,6 +636,11 @@ func (g *GitFake) StashPop(dir string) error {
 	return nil
 }
 
+// GetConflicts does nothing
+func (g *GitFake) GetConflicts(dir string) ([]string, error) {
+	return nil, nil
+}
+
 // CloneBare does nothing
 func (g *GitFake) CloneBare(dir string, url string) error {
 	return nil

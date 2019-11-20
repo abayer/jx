@@ -296,6 +296,19 @@ func (g *GitCLI) StashPop(dir string) error {
 	return g.gitCmd(dir, "stash", "pop")
 }
 
+// GetConflicts returns a list of any unmerged files in the directory marked as having conflicts
+func (g *GitCLI) GetConflicts(dir string) ([]string, error) {
+	answer := []string{}
+	text, err := g.gitCmdWithOutput(dir, "diff", "--name-only", "--diff-filter=U")
+	if err != nil {
+		return answer, err
+	}
+	if text != "" {
+		answer = strings.Split(text, "\n")
+	}
+	return answer, nil
+}
+
 // CheckoutRemoteBranch checks out the given remote tracking branch
 func (g *GitCLI) CheckoutRemoteBranch(dir string, branch string) error {
 	remoteBranch := "origin/" + branch
