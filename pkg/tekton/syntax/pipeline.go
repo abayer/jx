@@ -34,6 +34,9 @@ const (
 
 	// WorkingDirRoot is the root directory for working directories.
 	WorkingDirRoot = "/workspace"
+
+	// braceMatchingRegex matches "${inputs.params.foo}" so we can replace it with "$(inputs.params.foo)"
+	braceMatchingRegex = "(\\$(\\{(?P<var>inputs\\.params\\.[_a-zA-Z][_a-zA-Z0-9.-]*)\\}))"
 )
 
 // ParsedPipeline is the internal representation of the Pipeline, used to validate and create CRDs
@@ -1580,6 +1583,16 @@ func generateSteps(params generateStepsParams) ([]tektonv1alpha1.Step, map[strin
 		if params.stageParams.parentParams.InterpretMode {
 			c.WorkingDir = targetDir
 		} else {
+			var newCmd []string
+			var newArgs []string
+			for _, c := range c.Command {
+				newCmd = append(newCmd, ReplaceCurlyWithParen(c))
+			}
+			c.Command = newCmd
+			for _, a := range c.Args {
+				newArgs = append(newArgs, ReplaceCurlyWithParen(a))
+			}
+			c.Args = newArgs
 			c.WorkingDir = workingDir
 		}
 		params.stepCounter++
@@ -1810,7 +1823,7 @@ func createPipelineTasks(stage *transformedStage, resourceName string) []tektonv
 		return pTasks
 	} else {
 		pTask := tektonv1alpha1.PipelineTask{
-			Name: stage.Stage.taskName(), // TODO: What should this actually be named?
+			Name: stage.Stage.stageLabelName(),
 			TaskRef: tektonv1alpha1.TaskRef{
 				Name: stage.Task.Name,
 			},
@@ -2292,4 +2305,24 @@ func OverrideStep(step Step, override *PipelineOverride) []Step {
 	}
 
 	return []Step{step}
+}
+
+// StringParamValue generates a Tekton ArrayOrString value for the given string
+func StringParamValue(val string) tektonv1alpha1.ArrayOrString {
+	return tektonv1alpha1.ArrayOrString{
+		Type:      tektonv1alpha1.ParamTypeString,
+		StringVal: val,
+	}
+}
+
+// ReplaceCurlyWithParen replaces legacy "${inputs.params.foo}" with "$(inputs.params.foo)"
+func ReplaceCurlyWithParen(input string) string {
+	re := regexp.MustCompile(braceMatchingRegex)
+	matches := re.FindAllStringSubmatch(input, -1)
+	for _, m := range matches {
+		if len(m) >= 3 {
+			input = strings.ReplaceAll(input, m[0], "$("+m[3]+")")
+		}
+	}
+	return input
 }

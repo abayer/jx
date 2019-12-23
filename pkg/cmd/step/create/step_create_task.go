@@ -791,13 +791,12 @@ func (o *StepCreateTaskOptions) createTaskParams() []pipelineapi.ParamSpec {
 			description = "the PipelineRun build number"
 			defaultValue = o.BuildNumber
 		}
+		stringParamDefaultValue := syntax.StringParamValue(defaultValue)
 		taskParams = append(taskParams, pipelineapi.ParamSpec{
 			Name:        name,
 			Description: description,
-			Default: &pipelineapi.ArrayOrString{
-				Type:      pipelineapi.ParamTypeString,
-				StringVal: defaultValue,
-			},
+			Default:     &stringParamDefaultValue,
+			Type:        pipelineapi.ParamTypeString,
 		})
 	}
 	return taskParams
@@ -811,6 +810,7 @@ func (o *StepCreateTaskOptions) createPipelineParams() []pipelineapi.ParamSpec {
 			Name:        tp.Name,
 			Description: tp.Description,
 			Default:     tp.Default,
+			Type:        tp.Type,
 		})
 	}
 	return answer
@@ -820,11 +820,8 @@ func (o *StepCreateTaskOptions) createPipelineTaskParams() []pipelineapi.Param {
 	ptp := []pipelineapi.Param{}
 	for _, p := range o.pipelineParams {
 		ptp = append(ptp, pipelineapi.Param{
-			Name: p.Name,
-			Value: pipelineapi.ArrayOrString{
-				Type:      pipelineapi.ParamTypeString,
-				StringVal: fmt.Sprintf("${params.%s}", p.Name),
-			},
+			Name:  p.Name,
+			Value: syntax.StringParamValue(fmt.Sprintf("$(params.%s)", p.Name)),
 		})
 	}
 	return ptp
@@ -1001,7 +998,7 @@ func (o *StepCreateTaskOptions) modifyEnvVars(container *corev1.Container, globa
 		if kube.GetSliceEnvVar(envVars, name) == nil {
 			envVars = append(envVars, corev1.EnvVar{
 				Name:  name,
-				Value: "${inputs.params." + param.Name + "}",
+				Value: "$(inputs.params." + param.Name + ")",
 			})
 		}
 	}
@@ -1029,7 +1026,7 @@ func (o *StepCreateTaskOptions) modifyEnvVars(container *corev1.Container, globa
 	if kube.GetSliceEnvVar(envVars, "PREVIEW_VERSION") == nil && kube.GetSliceEnvVar(envVars, "VERSION") != nil {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "PREVIEW_VERSION",
-			Value: "${inputs.params.version}",
+			Value: "$(inputs.params.version)",
 		})
 	}
 	for k, v := range o.AdditionalEnvVars {
@@ -1302,11 +1299,8 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 		o.version = version
 		o.setRevisionForReleasePipeline(version)
 		o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-			Name: "version",
-			Value: pipelineapi.ArrayOrString{
-				Type:      pipelineapi.ParamTypeString,
-				StringVal: o.version,
-			},
+			Name:  "version",
+			Value: syntax.StringParamValue(o.version),
 		})
 		log.Logger().Infof("Version used: '%s'", util.ColorInfo(version))
 
@@ -1356,11 +1350,8 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 	if version != "" {
 		if !hasParam(o.pipelineParams, "version") {
 			o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-				Name: "version",
-				Value: pipelineapi.ArrayOrString{
-					Type:      pipelineapi.ParamTypeString,
-					StringVal: version,
-				},
+				Name:  "version",
+				Value: syntax.StringParamValue(version),
 			})
 		}
 	}
@@ -1368,11 +1359,8 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 	if o.BuildNumber != "" {
 		if !hasParam(o.pipelineParams, "build_id") {
 			o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-				Name: "build_id",
-				Value: pipelineapi.ArrayOrString{
-					Type:      pipelineapi.ParamTypeString,
-					StringVal: o.BuildNumber,
-				},
+				Name:  "build_id",
+				Value: syntax.StringParamValue(o.BuildNumber),
 			})
 		}
 	}
