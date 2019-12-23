@@ -69,8 +69,9 @@ require (
 	github.com/jenkins-x/golang-jenkins v0.0.0-20180919102630-65b83ad42314
 	github.com/jetstack/cert-manager v0.9.1
 	github.com/kevinburke/ssh_config v0.0.0-20180317175531-9fc7bb800b55 // indirect
-	github.com/knative/pkg v0.0.0-20190402181056-ff46edef0ae5
-	github.com/knative/serving v0.5.0
+	github.com/knative/build v0.7.0
+	github.com/knative/pkg v0.0.0-20190624141606-d82505e6c5b4
+	github.com/knative/serving v0.7.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lusis/go-slackbot v0.0.0-20180109053408-401027ccfef5 // indirect
