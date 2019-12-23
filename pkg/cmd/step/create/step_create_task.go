@@ -733,8 +733,8 @@ func (o *StepCreateTaskOptions) getDefaultTaskInputs() *pipelineapi.Inputs {
 func (o *StepCreateTaskOptions) enhanceTaskWithVolumesEnvAndInputs(task *pipelineapi.Task, env []corev1.EnvVar, inputs pipelineapi.Inputs) {
 	volumes := task.Spec.Volumes
 	for i, step := range task.Spec.Steps {
-		volumes = o.modifyVolumes(&step, volumes)
-		o.modifyEnvVars(&step, env)
+		volumes = o.modifyVolumes(&step.Container, volumes)
+		o.modifyEnvVars(&step.Container, env)
 		task.Spec.Steps[i] = step
 	}
 
@@ -794,7 +794,10 @@ func (o *StepCreateTaskOptions) createTaskParams() []pipelineapi.ParamSpec {
 		taskParams = append(taskParams, pipelineapi.ParamSpec{
 			Name:        name,
 			Description: description,
-			Default:     defaultValue,
+			Default: &pipelineapi.ArrayOrString{
+				Type:      pipelineapi.ParamTypeString,
+				StringVal: defaultValue,
+			},
 		})
 	}
 	return taskParams
@@ -817,8 +820,11 @@ func (o *StepCreateTaskOptions) createPipelineTaskParams() []pipelineapi.Param {
 	ptp := []pipelineapi.Param{}
 	for _, p := range o.pipelineParams {
 		ptp = append(ptp, pipelineapi.Param{
-			Name:  p.Name,
-			Value: fmt.Sprintf("${params.%s}", p.Name),
+			Name: p.Name,
+			Value: pipelineapi.ArrayOrString{
+				Type:      pipelineapi.ParamTypeString,
+				StringVal: fmt.Sprintf("${params.%s}", p.Name),
+			},
 		})
 	}
 	return ptp
@@ -1296,8 +1302,11 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 		o.version = version
 		o.setRevisionForReleasePipeline(version)
 		o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-			Name:  "version",
-			Value: o.version,
+			Name: "version",
+			Value: pipelineapi.ArrayOrString{
+				Type:      pipelineapi.ParamTypeString,
+				StringVal: o.version,
+			},
 		})
 		log.Logger().Infof("Version used: '%s'", util.ColorInfo(version))
 
@@ -1347,8 +1356,11 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 	if version != "" {
 		if !hasParam(o.pipelineParams, "version") {
 			o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-				Name:  "version",
-				Value: version,
+				Name: "version",
+				Value: pipelineapi.ArrayOrString{
+					Type:      pipelineapi.ParamTypeString,
+					StringVal: version,
+				},
 			})
 		}
 	}
@@ -1356,8 +1368,11 @@ func (o *StepCreateTaskOptions) setBuildVersion(pipelineConfig *jenkinsfile.Pipe
 	if o.BuildNumber != "" {
 		if !hasParam(o.pipelineParams, "build_id") {
 			o.pipelineParams = append(o.pipelineParams, pipelineapi.Param{
-				Name:  "build_id",
-				Value: o.BuildNumber,
+				Name: "build_id",
+				Value: pipelineapi.ArrayOrString{
+					Type:      pipelineapi.ParamTypeString,
+					StringVal: o.BuildNumber,
+				},
 			})
 		}
 	}
@@ -1478,7 +1493,9 @@ func (o *StepCreateTaskOptions) getClientsAndNamespace() (tektonclient.Interface
 func (o *StepCreateTaskOptions) interpretPipeline(ns string, projectConfig *config.ProjectConfig, crds *tekton.CRDWrapper) error {
 	steps := []corev1.Container{}
 	for _, task := range crds.Tasks() {
-		steps = append(steps, task.Spec.Steps...)
+		for _, s := range task.Spec.Steps {
+			steps = append(steps, s.Container)
+		}
 	}
 
 	if o.StartStep != "" {
