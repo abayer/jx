@@ -22,7 +22,6 @@ import (
 	util "github.com/jenkins-x/jx/pkg/util"
 	vault "github.com/jenkins-x/jx/pkg/vault"
 	versioned1 "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	versioned2 "github.com/knative/build/pkg/client/clientset/versioned"
 	versioned3 "github.com/knative/serving/pkg/client/clientset/versioned"
 	pegomock "github.com/petergtz/pegomock"
 	versioned4 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -353,29 +352,6 @@ func (mock *MockFactory) CreateJenkinsClient(_param0 kubernetes.Interface, _para
 		}
 	}
 	return ret0, ret1
-}
-
-func (mock *MockFactory) CreateKnativeBuildClient() (versioned2.Interface, string, error) {
-	if mock == nil {
-		panic("mock must not be nil. Use myMock := NewMockFactory().")
-	}
-	params := []pegomock.Param{}
-	result := pegomock.GetGenericMockFrom(mock).Invoke("CreateKnativeBuildClient", params, []reflect.Type{reflect.TypeOf((*versioned2.Interface)(nil)).Elem(), reflect.TypeOf((*string)(nil)).Elem(), reflect.TypeOf((*error)(nil)).Elem()})
-	var ret0 versioned2.Interface
-	var ret1 string
-	var ret2 error
-	if len(result) != 0 {
-		if result[0] != nil {
-			ret0 = result[0].(versioned2.Interface)
-		}
-		if result[1] != nil {
-			ret1 = result[1].(string)
-		}
-		if result[2] != nil {
-			ret2 = result[2].(error)
-		}
-	}
-	return ret0, ret1, ret2
 }
 
 func (mock *MockFactory) CreateKnativeServeClient() (versioned3.Interface, string, error) {
@@ -1226,23 +1202,6 @@ func (c *MockFactory_CreateJenkinsClient_OngoingVerification) GetAllCapturedArgu
 		}
 	}
 	return
-}
-
-func (verifier *VerifierMockFactory) CreateKnativeBuildClient() *MockFactory_CreateKnativeBuildClient_OngoingVerification {
-	params := []pegomock.Param{}
-	methodInvocations := pegomock.GetGenericMockFrom(verifier.mock).Verify(verifier.inOrderContext, verifier.invocationCountMatcher, "CreateKnativeBuildClient", params, verifier.timeout)
-	return &MockFactory_CreateKnativeBuildClient_OngoingVerification{mock: verifier.mock, methodInvocations: methodInvocations}
-}
-
-type MockFactory_CreateKnativeBuildClient_OngoingVerification struct {
-	mock              *MockFactory
-	methodInvocations []pegomock.MethodInvocation
-}
-
-func (c *MockFactory_CreateKnativeBuildClient_OngoingVerification) GetCapturedArguments() {
-}
-
-func (c *MockFactory_CreateKnativeBuildClient_OngoingVerification) GetAllCapturedArguments() {
 }
 
 func (verifier *VerifierMockFactory) CreateKnativeServeClient() *MockFactory_CreateKnativeServeClient_OngoingVerification {
