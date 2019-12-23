@@ -30,7 +30,6 @@ import (
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/table"
 	fake_vault "github.com/jenkins-x/jx/pkg/vault/fake"
-	build "github.com/knative/build/pkg/client/clientset/versioned"
 	kserve "github.com/knative/serving/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	tektonclient "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -56,7 +55,6 @@ type FakeFactory struct {
 
 	// cached fake clients
 	apiClient    apiextensionsclientset.Interface
-	buildClient  build.Interface
 	jxClient     versioned.Interface
 	kubeClient   kubernetes.Interface
 	kserveClient kserve.Interface
