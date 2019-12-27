@@ -26,7 +26,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/kube/resources"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
-	kservefake "github.com/knative/serving/pkg/client/clientset/versioned/fake"
+	kservefake "knative.dev/serving/pkg/client/clientset/versioned/fake"
 	"github.com/petergtz/pegomock"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

@@ -26,7 +26,7 @@ import (
 	jxsyntax "github.com/jenkins-x/jx/pkg/tekton/syntax"
 	sht "github.com/jenkins-x/jx/pkg/tekton/syntax/syntax_helpers_test"
 	"github.com/jenkins-x/jx/pkg/tests"
-	"github.com/knative/pkg/kmp"
+	"knative.dev/pkg/kmp"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	tb "github.com/tektoncd/pipeline/test/builder"

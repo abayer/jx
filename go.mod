@@ -72,9 +72,6 @@ require (
 	github.com/jenkins-x/golang-jenkins v0.0.0-20180919102630-65b83ad42314
 	github.com/jetstack/cert-manager v0.5.2
 	github.com/kevinburke/ssh_config v0.0.0-20180317175531-9fc7bb800b55 // indirect
-	github.com/knative/build v0.7.0
-	github.com/knative/pkg v0.0.0-20190624141606-d82505e6c5b4
-	github.com/knative/serving v0.7.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lusis/go-slackbot v0.0.0-20180109053408-401027ccfef5 // indirect
@@ -144,20 +141,21 @@ require (
 	k8s.io/kubernetes v1.11.3
 	k8s.io/metrics v0.0.0-20180620010437-b11cf31b380b
 	k8s.io/test-infra v0.0.0-20190131093439-a22cef183a8f
-	knative.dev/pkg v0.0.0-20191217184203-cf220a867b3d
+	knative.dev/pkg v0.0.0-20190909195211-528ad1c1dd62
+	knative.dev/serving v0.8.1-0.20190910005511-80ec2f7fce8d
 	sigs.k8s.io/yaml v1.1.0
 
 )
 
-replace k8s.io/api => k8s.io/api v0.0.0-20190528110122-9ad12a4af326
+replace k8s.io/api => k8s.io/api v0.0.0-20191004102255-dacd7df5a50b
 
 replace k8s.io/metrics => k8s.io/metrics v0.0.0-20181128195641-3954d62a524d
 
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190221084156-01f179d85dbc
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004074956-01f8b7d1121a
 
-replace k8s.io/client-go => k8s.io/client-go v0.0.0-20190528110200-4f3abb12cae2
+replace k8s.io/client-go => k8s.io/client-go v0.0.0-20191004102537-eb5b9a8cfde7
 
-replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190528110544-fa58353d80f3
+replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191004105443-a7d558db75c6
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
 
@@ -165,6 +163,6 @@ replace github.com/sirupsen/logrus => github.com/jtnord/logrus v1.4.2-0.20190423
 
 replace github.com/Azure/azure-sdk-for-go => github.com/Azure/azure-sdk-for-go v21.1.0+incompatible
 
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v10.14.0+incompatible
+replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v11.1.0+incompatible
 
 replace github.com/banzaicloud/bank-vaults => github.com/banzaicloud/bank-vaults v0.0.0-20190508130850-5673d28c46bd

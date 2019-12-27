@@ -1,8 +1,8 @@
 package kserving
 
 import (
-	"github.com/knative/serving/pkg/apis/serving/v1alpha1"
-	kserve "github.com/knative/serving/pkg/client/clientset/versioned"
+	"knative.dev/serving/pkg/apis/serving/v1alpha1"
+	kserve "knative.dev/serving/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )

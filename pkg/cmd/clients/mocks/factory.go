@@ -22,7 +22,7 @@ import (
 	util "github.com/jenkins-x/jx/pkg/util"
 	vault "github.com/jenkins-x/jx/pkg/vault"
 	versioned1 "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	versioned2 "github.com/knative/serving/pkg/client/clientset/versioned"
+	versioned2 "knative.dev/serving/pkg/client/clientset/versioned"
 	pegomock "github.com/petergtz/pegomock"
 	versioned3 "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	clientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"

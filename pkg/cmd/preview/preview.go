@@ -37,7 +37,7 @@ import (
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
-	kserve "github.com/knative/serving/pkg/client/clientset/versioned"
+	kserve "knative.dev/serving/pkg/client/clientset/versioned"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
