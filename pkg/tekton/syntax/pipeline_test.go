@@ -16,12 +16,12 @@ import (
 	"github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/tekton/syntax"
 	sh "github.com/jenkins-x/jx/pkg/tekton/syntax/syntax_helpers_test"
-	"knative.dev/pkg/apis"
-	"knative.dev/pkg/kmp"
 	tektonv1alpha1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	tb "github.com/tektoncd/pipeline/test/builder"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"knative.dev/pkg/apis"
+	"knative.dev/pkg/kmp"
 )
 
 var (
