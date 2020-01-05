@@ -28,8 +28,8 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
 	versioned3 "k8s.io/metrics/pkg/client/clientset/versioned"
+	versioned5 "k8s.io/test-infra/prow/client/clientset/versioned"
 	versioned4 "knative.dev/serving/pkg/client/clientset/versioned"
-    versioned5 "k8s.io/test-infra/prow/client/clientset/versioned"
 )
 
 type MockFactory struct {

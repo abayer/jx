@@ -273,7 +273,7 @@ func (o *StartPipelineOptions) createProwJob(jobname string) error {
 
 	agent := prowjobv1.ProwJobAgent(prow.TektonAgent)
 	jobSpec := prowjobv1.ProwJobSpec{
-		Agent:     agent,
+		Agent: agent,
 	}
 	jobSpec.Type = prowjobv1.PostsubmitJob
 
