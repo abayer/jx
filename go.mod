@@ -47,7 +47,6 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/gfleury/go-bitbucket-v1 v0.0.0-20190216152406-3a732135aa4d
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/go-check/check v0.0.0-20140225173054-eb6ee6f84d0a
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-openapi/jsonreference v0.19.2
 	github.com/go-openapi/spec v0.19.2
