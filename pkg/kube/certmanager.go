@@ -10,7 +10,7 @@ const labelLetsencryptService = "jenkins.io/letsencrypt-service"
 
 // IsStagingCertificate looks at certmanager certificates to find if we are using staging or prod certs
 func IsStagingCertificate(client certmngclient.Interface, ns string) (bool, error) {
-	certs, err := client.CertmanagerV1alpha2().Certificates(ns).List(metav1.ListOptions{})
+	certs, err := client.CertmanagerV1alpha1().Certificates(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return false, err
 	}

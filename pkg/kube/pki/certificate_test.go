@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/jenkins-x/jx/pkg/kube/pki"
-	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
+	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	certclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/jetstack/cert-manager/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
@@ -23,22 +22,22 @@ func TestWaitCertificateIssuedReady(t *testing.T) {
 	const ns = "test"
 	cert := newCert(name, certmng.CertificateCondition{
 		Type:   certmng.CertificateConditionReady,
-		Status: cmmeta.ConditionTrue,
+		Status: certmng.ConditionTrue,
 	})
-	_, err := client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
+	_, err := client.CertmanagerV1alpha1().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate whithout an error")
 
 	err = pki.WaitCertificateIssuedReady(client, name, ns, 3*time.Second)
 	assert.NoError(t, err, "should find a cert in ready state")
 
-	err = client.CertmanagerV1alpha2().Certificates(ns).Delete(name, &metav1.DeleteOptions{})
+	err = client.CertmanagerV1alpha1().Certificates(ns).Delete(name, &metav1.DeleteOptions{})
 	assert.NoError(t, err, "should delete the test certificate whithout an error")
 
 	cert = newCert(name, certmng.CertificateCondition{
 		Type:   certmng.CertificateConditionReady,
-		Status: cmmeta.ConditionFalse,
+		Status: certmng.ConditionFalse,
 	})
-	_, err = client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
+	_, err = client.CertmanagerV1alpha1().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate whithout an error")
 
 	err = pki.WaitCertificateIssuedReady(client, name, ns, 5*time.Second)
@@ -96,7 +95,7 @@ func TestWatchCertificatesIssuedReady(t *testing.T) {
 				for _, name := range certs {
 					createAndUpdateCert(t, client, name, ns, certmng.CertificateCondition{
 						Type:   certmng.CertificateConditionReady,
-						Status: cmmeta.ConditionTrue,
+						Status: certmng.ConditionTrue,
 					})
 				}
 			}
@@ -128,13 +127,13 @@ func TestWatchCertificatesIssuedReady(t *testing.T) {
 
 func createAndUpdateCert(t *testing.T, client certclient.Interface, name, ns string, condition certmng.CertificateCondition) {
 	cert := newCert(name, certmng.CertificateCondition{})
-	cert, err := client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
+	cert, err := client.CertmanagerV1alpha1().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate without an error")
 	cert.Status = certmng.CertificateStatus{
 		Conditions: []certmng.CertificateCondition{
 			condition,
 		},
 	}
-	_, err = client.CertmanagerV1alpha2().Certificates(ns).Update(cert)
+	_, err = client.CertmanagerV1alpha1().Certificates(ns).Update(cert)
 	assert.NoError(t, err, "should update the test crtificate without an error")
 }
