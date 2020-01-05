@@ -10,7 +10,9 @@ import (
 	"github.com/jenkins-x/jx/pkg/util"
 
 	kubeservices "github.com/jenkins-x/jx/pkg/kube/services"
-	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	certutil "github.com/jetstack/cert-manager/pkg/api/util"
+	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	certmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	certclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -34,13 +36,13 @@ type Certificate struct {
 // WaitCertificateIssuedReady wait for a certificate issued by cert-manager until is ready or the timeout is reached
 func WaitCertificateIssuedReady(client certclient.Interface, name string, ns string, timeout time.Duration) error {
 	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
-		cert, err := client.CertmanagerV1alpha1().Certificates(ns).Get(name, metav1.GetOptions{})
+		cert, err := client.CertmanagerV1alpha2().Certificates(ns).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
-		isReady := cert.HasCondition(certmng.CertificateCondition{
+		isReady := certutil.CertificateHasCondition(cert, certmng.CertificateCondition{
 			Type:   certmng.CertificateConditionReady,
-			Status: certmng.ConditionTrue,
+			Status: certmeta.ConditionTrue,
 		})
 		if !isReady {
 			return false, nil
@@ -57,7 +59,7 @@ func WaitCertificateIssuedReady(client certclient.Interface, name string, ns str
 // WaitCertificateExists waits until the timeout for the certificate with the provided name to be available in the certificates list
 func WaitCertificateExists(client certclient.Interface, name string, ns string, timeout time.Duration) error {
 	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
-		_, err := client.CertmanagerV1alpha1().Certificates(ns).Get(name, metav1.GetOptions{})
+		_, err := client.CertmanagerV1alpha2().Certificates(ns).Get(name, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -89,7 +91,7 @@ func CleanCerts(client kubernetes.Interface, certclient certclient.Interface, ns
 }
 
 func cleanCerts(client kubernetes.Interface, certclient certclient.Interface, ns string, allow func(string) bool) error {
-	certsClient := certclient.Certmanager().Certificates(ns)
+	certsClient := certclient.CertmanagerV1alpha2().Certificates(ns)
 	certsList, err := certsClient.List(metav1.ListOptions{})
 	if err != nil {
 		// there are no certificates to clean
@@ -127,7 +129,7 @@ func (c Certificate) String() string {
 // WatchCertificatesIssuedReady starts watching for ready certificate in the given namespace.
 // If the namespace is empty, it will watch the entire cluster. The caller can stop watching by cancelling the context.
 func WatchCertificatesIssuedReady(ctx context.Context, client certclient.Interface, ns string) (<-chan Certificate, error) {
-	watcher, err := client.Certmanager().Certificates(ns).Watch(metav1.ListOptions{})
+	watcher, err := client.CertmanagerV1alpha2().Certificates(ns).Watch(metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "watching certificates in namespace %q", ns)
 	}
@@ -159,16 +161,16 @@ func WatchCertificatesIssuedReady(ctx context.Context, client certclient.Interfa
 }
 
 func isCertReady(cert *certmng.Certificate) bool {
-	return cert.HasCondition(certmng.CertificateCondition{
+	return certutil.CertificateHasCondition(cert, certmng.CertificateCondition{
 		Type:   certmng.CertificateConditionReady,
-		Status: certmng.ConditionTrue,
+		Status: certmeta.ConditionTrue,
 	})
 }
 
 // GetIssuedReadyCertificates returns the current ready certificates in the given namespace
 func GetIssuedReadyCertificates(client certclient.Interface, ns string) ([]Certificate, error) {
 	certs := make([]Certificate, 0)
-	certsList, err := client.Certmanager().Certificates(ns).List(metav1.ListOptions{})
+	certsList, err := client.CertmanagerV1alpha2().Certificates(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return certs, errors.Wrapf(err, "listing certificates in namespace %q", ns)
 	}

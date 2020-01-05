@@ -4,7 +4,9 @@ import (
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
-	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	cmacme "github.com/jetstack/cert-manager/pkg/apis/acme/v1alpha2"
+	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	certclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,23 +40,23 @@ const (
 // CleanCertManagerResources removed the cert-manager resources from the given namespaces
 func CleanCertManagerResources(certclient certclient.Interface, ns string, ic kube.IngressConfig) error {
 	if ic.Issuer == CertManagerIssuerProd {
-		_, err := certclient.Certmanager().Issuers(ns).Get(CertManagerIssuerProd, metav1.GetOptions{})
+		_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Get(CertManagerIssuerProd, metav1.GetOptions{})
 		if err == nil {
-			err := certclient.Certmanager().Issuers(ns).Delete(CertManagerIssuerProd, &metav1.DeleteOptions{})
+			err := certclient.CertmanagerV1alpha2().Issuers(ns).Delete(CertManagerIssuerProd, &metav1.DeleteOptions{})
 			if err != nil {
 				return errors.Wrapf(err, "deleting cert-manager issuer %q", CertManagerIssuerProd)
 			}
 		}
-		_ = certclient.Certmanager().Certificates(ns).Delete(CertManagerIssuerProd, &metav1.DeleteOptions{})
+		_ = certclient.CertmanagerV1alpha2().Certificates(ns).Delete(CertManagerIssuerProd, &metav1.DeleteOptions{})
 	} else {
-		_, err := certclient.Certmanager().Issuers(ns).Get(CertManagerIssuerStaging, metav1.GetOptions{})
+		_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Get(CertManagerIssuerStaging, metav1.GetOptions{})
 		if err == nil {
-			err := certclient.Certmanager().Issuers(ns).Delete(CertManagerIssuerStaging, &metav1.DeleteOptions{})
+			err := certclient.CertmanagerV1alpha2().Issuers(ns).Delete(CertManagerIssuerStaging, &metav1.DeleteOptions{})
 			if err != nil {
 				return errors.Wrapf(err, "deleting cert-manager issuer %q", CertManagerIssuerStaging)
 			}
 		}
-		_ = certclient.Certmanager().Certificates(ns).Delete(CertManagerIssuerStaging, &metav1.DeleteOptions{})
+		_ = certclient.CertmanagerV1alpha2().Certificates(ns).Delete(CertManagerIssuerStaging, &metav1.DeleteOptions{})
 	}
 	return nil
 }
@@ -62,18 +64,18 @@ func CleanCertManagerResources(certclient certclient.Interface, ns string, ic ku
 // CreateIssuer creates a cert-manager issuer according with the ingress configuration
 func CreateIssuer(certclient certclient.Interface, ns string, ic kube.IngressConfig) error {
 	if ic.Issuer == CertManagerIssuerProd {
-		_, err := certclient.Certmanager().Issuers(ns).Get(CertManagerIssuerProd, metav1.GetOptions{})
+		_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Get(CertManagerIssuerProd, metav1.GetOptions{})
 		if err != nil {
-			_, err := certclient.Certmanager().Issuers(ns).Create(
+			_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Create(
 				issuer(CertManagerIssuerProd, certManagerIssuerProdServer, ic.Email))
 			if err != nil {
 				return errors.Wrapf(err, "creating cert-manager issuer %q", CertManagerIssuerProd)
 			}
 		}
 	} else {
-		_, err := certclient.Certmanager().Issuers(ns).Get(CertManagerIssuerStaging, metav1.GetOptions{})
+		_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Get(CertManagerIssuerStaging, metav1.GetOptions{})
 		if err != nil {
-			_, err := certclient.Certmanager().Issuers(ns).Create(
+			_, err := certclient.CertmanagerV1alpha2().Issuers(ns).Create(
 				issuer(CertManagerIssuerStaging, certManagerIssuerStagingServer, ic.Email))
 			if err != nil {
 				return errors.Wrapf(err, "creating cert-manager issuer %q", CertManagerIssuerStaging)
@@ -91,16 +93,15 @@ func issuer(name string, server string, email string) *certmng.Issuer {
 		},
 		Spec: certmng.IssuerSpec{
 			IssuerConfig: certmng.IssuerConfig{
-				ACME: &certmng.ACMEIssuer{
+				ACME: &cmacme.ACMEIssuer{
 					Email:         email,
 					Server:        server,
 					SkipTLSVerify: false,
-					PrivateKey: certmng.SecretKeySelector{
-						LocalObjectReference: certmng.LocalObjectReference{
+					PrivateKey: cmmeta.SecretKeySelector{
+						LocalObjectReference: cmmeta.LocalObjectReference{
 							Name: name,
 						},
 					},
-					HTTP01: &certmng.ACMEIssuerHTTP01Config{},
 				},
 			},
 		},
@@ -136,7 +137,7 @@ func CreateCertManagerResources(certclient certclient.Interface, targetNamespace
 
 // alreadyConfigured checks if cert-manager resources are already configured and match with the ingress configuration
 func alreadyConfigured(certClient certclient.Interface, targetNamespace string, ingressConfig kube.IngressConfig) bool {
-	issuer, err := certClient.CertmanagerV1alpha1().Issuers(targetNamespace).Get(ingressConfig.Issuer, metav1.GetOptions{})
+	issuer, err := certClient.CertmanagerV1alpha2().Issuers(targetNamespace).Get(ingressConfig.Issuer, metav1.GetOptions{})
 	if err != nil {
 		log.Logger().Infof("Certificate issuer %s does not exist. Creating...", util.ColorInfo(ingressConfig.Issuer))
 		return false
@@ -144,7 +145,7 @@ func alreadyConfigured(certClient certclient.Interface, targetNamespace string, 
 	// ingress and issuer email must match
 	if issuer.Spec.ACME.Email != ingressConfig.Email {
 		issuer.Spec.ACME.Email = ingressConfig.Email
-		_, err := certClient.CertmanagerV1alpha1().Issuers(targetNamespace).Update(issuer)
+		_, err := certClient.CertmanagerV1alpha2().Issuers(targetNamespace).Update(issuer)
 		if err != nil {
 			// can not update the issuer, let's assume it needs recreation
 			log.Logger().Infof("Certificate issuer %s can not be updated. Recreating...", util.ColorInfo(ingressConfig.Issuer))

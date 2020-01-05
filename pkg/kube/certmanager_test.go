@@ -3,7 +3,7 @@ package kube
 import (
 	"testing"
 
-	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	certmng "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 	"github.com/jetstack/cert-manager/pkg/client/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +18,7 @@ func TestIsStagingCertificate(t *testing.T) {
 	const ns = "test"
 	cert := newCert(name, "staging")
 
-	_, err := client.Certmanager().Certificates(ns).Create(cert)
+	_, err := client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate whithout an error")
 
 	isStaging, err := IsStagingCertificate(client, ns)
@@ -34,7 +34,7 @@ func TestIsNotStagingCertificate(t *testing.T) {
 	const name = "test"
 	const ns = "test"
 	cert := newCert(name, "production")
-	_, err := client.Certmanager().Certificates(ns).Create(cert)
+	_, err := client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate whithout an error")
 
 	isStaging, err := IsStagingCertificate(client, ns)
