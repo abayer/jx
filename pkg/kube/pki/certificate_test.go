@@ -36,7 +36,7 @@ func TestWaitCertificateIssuedReady(t *testing.T) {
 
 	cert = newCert(name, certmng.CertificateCondition{
 		Type:   certmng.CertificateConditionReady,
-		Status: cmmeta.ConditionTrue,
+		Status: cmmeta.ConditionFalse,
 	})
 	_, err = client.CertmanagerV1alpha2().Certificates(ns).Create(cert)
 	assert.NoError(t, err, "should create a test certificate whithout an error")

@@ -47,6 +47,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/gfleury/go-bitbucket-v1 v0.0.0-20190216152406-3a732135aa4d
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/go-ini/ini v1.42.0 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-openapi/jsonreference v0.19.2
 	github.com/go-openapi/spec v0.19.2
@@ -68,7 +69,7 @@ require (
 	github.com/jbrukh/bayesian v0.0.0-20161210175230-bf3f261f9a9c // indirect
 	github.com/jenkins-x/draft-repo v0.0.0-20180417100212-2f66cc518135
 	github.com/jenkins-x/golang-jenkins v0.0.0-20180919102630-65b83ad42314
-	github.com/jetstack/cert-manager v0.11.0
+	github.com/jetstack/cert-manager v0.12.0
 	github.com/kevinburke/ssh_config v0.0.0-20180317175531-9fc7bb800b55 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -82,6 +83,7 @@ require (
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0
+	github.com/openshift/generic-admission-server v1.14.0 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pelletier/go-buffruneio v0.2.0 // indirect
 	github.com/petergtz/pegomock v2.7.0+incompatible
@@ -125,10 +127,10 @@ require (
 	gopkg.in/src-d/go-git-fixtures.v3 v3.3.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.5.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.2.2
-	k8s.io/api v0.0.0-20190918155943-95b840bb6a1f
-	k8s.io/apiextensions-apiserver v0.0.0-20190918161926-8f644eb6e783
-	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655
+	gopkg.in/yaml.v2 v2.2.4
+	k8s.io/api v0.0.0-20191114100352-16d7abae0d2a
+	k8s.io/apiextensions-apiserver v0.0.0-20191114105449-027877536833
+	k8s.io/apimachinery v0.0.0-20191028221656-72ed19daf4bb
 	k8s.io/client-go v11.0.1-0.20190516230509-ae8359b20417+incompatible
 	k8s.io/helm v2.7.2+incompatible
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
@@ -163,6 +165,6 @@ replace github.com/banzaicloud/bank-vaults => github.com/banzaicloud/bank-vaults
 
 replace github.com/banzaicloud/bank-vaults/pkg/sdk => github.com/banzaicloud/bank-vaults/pkg/sdk v0.0.0-20191212164220-b327d7f2b681
 
-replace k8s.io/test-infra => github.com/abayer/test-infra v0.0.0-20200103170817-e7a4d43b0386
+replace k8s.io/test-infra => github.com/abayer/test-infra v0.0.0-20200105180038-f2f6e1a9da0f
 
 replace launchpad.net/gocheck => github.com/go-check/check v0.0.0-20140225173054-eb6ee6f84d0a
