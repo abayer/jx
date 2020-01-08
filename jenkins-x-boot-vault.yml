@@ -109,7 +109,12 @@ pipelineConfig:
                 value: http://jenkins-x-athens-proxy:80
               - name: PARALLEL_BUILDS
                 value: "2"
-              - name: GH_ACCESS_TOKEN 
+              - name: GHE_ACCESS_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: jx-pipeline-git-github-ghe
+                    key: password
+              - name: GH_ACCESS_TOKEN
                 valueFrom:
                   secretKeyRef:
                     name: jenkins-x-bot-test-github

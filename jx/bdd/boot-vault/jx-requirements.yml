@@ -1,7 +1,10 @@
 gitops: true
 cluster:
   clusterName: bdd-boot
-  environmentGitOwner: jenkins-x-bot-test
+  environmentGitOwner: dev1
+  gitKind: github
+  gitName: ghe
+  gitServer: https://github.beescloud.com
   project: jenkins-x-bdd3
   provider: gke
   zone: europe-west1-c
@@ -34,7 +37,7 @@ storage:
   repository:
     enabled: false
     url: ""
-webhook: prow
+webhook: lighthouse
 vault:
   disableURLDiscovery: true
 versionStream:
