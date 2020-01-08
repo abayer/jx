@@ -427,7 +427,27 @@ func (o *StepVerifyEnvironmentsOptions) createDevEnvironmentRepository(gitInfo *
 		log.Logger().Debugf("set commitish to '%s'", commitish)
 	}
 
-	duplicateInfo, err := gits.DuplicateGitRepoFromCommitish(gitInfo.Organisation, gitInfo.Name, fromGitURL, commitish, "master", privateRepo, provider, gitter)
+	var fromProvider gits.GitProvider
+	// If the to provider isn't github.com, and the fromGitURL is the default boot repository, use a non-authenticated github.com provider for the from provider.
+	if !provider.IsGitHub() && fromGitURL == config.DefaultBootRepository {
+		fromGitInfo, err := gits.ParseGitURL(fromGitURL)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse upstream boot config URL %s", fromGitURL)
+		}
+		if fromGitInfo.IsGitHub() {
+			ghServer := &auth.AuthServer{
+				URL:  "https://github.com",
+				Name: "gh",
+				Kind: "github",
+			}
+			fromProvider, err = gits.CreateProvider(ghServer, nil, gitter)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to configure anonymous GitHub provider for upstream boot config URL %s", fromGitURL)
+			}
+		}
+	}
+
+	duplicateInfo, err := gits.DuplicateGitRepoFromCommitish(gitInfo.Organisation, gitInfo.Name, fromGitURL, commitish, "master", privateRepo, provider, gitter, fromProvider)
 	if err != nil {
 		return nil, errors.Wrapf(err, "duplicating %s to %s/%s", fromGitURL, gitInfo.Organisation, gitInfo.Name)
 	}

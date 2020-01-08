@@ -1376,6 +1376,14 @@ func TestDuplicateGitRepoFromCommitish(t *testing.T) {
 		return nil
 	}, gitter)
 	assert.NoError(t, err)
+	otherProviderRepo, err := gits.NewFakeRepository("foo", "bar", func(dir string) error {
+		err := ioutil.WriteFile(filepath.Join(dir, "README"), []byte("Goodbye!"), 0655)
+		if err != nil {
+			return errors.Wrapf(err, "writing README")
+		}
+		return nil
+	}, gitter)
+	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "")
 	assert.NoError(t, err)
@@ -1432,12 +1440,13 @@ func TestDuplicateGitRepoFromCommitish(t *testing.T) {
 		gitter        gits.Gitter
 	}
 	tests := []struct {
-		provider  *gits.FakeProvider
-		name      string
-		args      args
-		want      *gits.GitRepository
-		wantFiles map[string][]byte
-		wantErr   string
+		provider         *gits.FakeProvider
+		useOtherProvider bool
+		name             string
+		args             args
+		want             *gits.GitRepository
+		wantFiles        map[string][]byte
+		wantErr          string
 	}{
 		{
 			name: "sameOrg",
@@ -1497,6 +1506,37 @@ func TestDuplicateGitRepoFromCommitish(t *testing.T) {
 			},
 			wantFiles: map[string][]byte{
 				"README": []byte("Hello!"),
+			},
+		},
+		{
+			name: "differentProvider",
+			args: args{
+				toOrg:         "coyote",
+				toName:        "wile",
+				fromGitURL:    "https://fake.git/foo/bar.git",
+				fromCommitish: "master",
+				toBranch:      "master",
+				gitter:        gitter,
+			},
+			useOtherProvider: true,
+			want: &gits.GitRepository{
+				Name:             "wile",
+				AllowMergeCommit: false,
+				HTMLURL:          "https://fake.git/coyote/wile",
+				CloneURL:         "",
+				SSHURL:           "",
+				Language:         "",
+				Fork:             false,
+				Stars:            0,
+				URL:              "https://fake.git/coyote/wile.git",
+				Scheme:           "https",
+				Host:             "fake.git",
+				Organisation:     "coyote",
+				Project:          "",
+				Private:          false,
+			},
+			wantFiles: map[string][]byte{
+				"README": []byte("Goodbye!"),
 			},
 		},
 		{
@@ -1621,6 +1661,38 @@ func TestDuplicateGitRepoFromCommitish(t *testing.T) {
 				"LICENSE": []byte("TODO"),
 			},
 		},
+		{
+			name: "wrongDifferentProvider",
+			args: args{
+				toOrg:         "coyote",
+				toName:        "wile",
+				fromGitURL:    "https://fake.git/acme/roadrunner.git",
+				fromCommitish: "master",
+				toBranch:      "master",
+				gitter:        gitter,
+			},
+			useOtherProvider: true,
+			want: &gits.GitRepository{
+				Name:             "wile",
+				AllowMergeCommit: false,
+				HTMLURL:          "https://fake.git/coyote/wile",
+				CloneURL:         "",
+				SSHURL:           "",
+				Language:         "",
+				Fork:             false,
+				Stars:            0,
+				URL:              "https://fake.git/coyote/wile.git",
+				Scheme:           "https",
+				Host:             "fake.git",
+				Organisation:     "coyote",
+				Project:          "",
+				Private:          false,
+			},
+			wantErr: "organization 'acme' not found",
+			wantFiles: map[string][]byte{
+				"README": []byte("Hello!"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1635,7 +1707,13 @@ func TestDuplicateGitRepoFromCommitish(t *testing.T) {
 			}
 			tt.provider = provider
 
-			got, err := gits.DuplicateGitRepoFromCommitish(tt.args.toOrg, tt.args.toName, tt.args.fromGitURL, tt.args.fromCommitish, tt.args.toBranch, false, tt.provider, tt.args.gitter)
+			var fromProvider *gits.FakeProvider
+			if tt.useOtherProvider {
+				fromProvider = gits.NewFakeProvider(otherProviderRepo)
+				fromProvider.Gitter = gitter
+			}
+
+			got, err := gits.DuplicateGitRepoFromCommitish(tt.args.toOrg, tt.args.toName, tt.args.fromGitURL, tt.args.fromCommitish, tt.args.toBranch, false, tt.provider, tt.args.gitter, fromProvider)
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -1701,7 +1779,7 @@ func Test_DuplicateGitRepoFromCommitish_returns_error_if_target_repo_exists(t *t
 	provider := gits.NewFakeProvider(originalRepo, targetRepo)
 	provider.Gitter = gitter
 
-	repo, err := gits.DuplicateGitRepoFromCommitish(targetRepo.GitRepo.Organisation, targetRepo.GitRepo.Name, originalRepo.GitRepo.CloneURL, "origin/foo", "bar", false, provider, gitter)
+	repo, err := gits.DuplicateGitRepoFromCommitish(targetRepo.GitRepo.Organisation, targetRepo.GitRepo.Name, originalRepo.GitRepo.CloneURL, "origin/foo", "bar", false, provider, gitter, nil)
 	assert.Error(t, err)
 	assert.Equal(t, "repository acme/coyote already exists", err.Error())
 	assert.Nil(t, repo)
