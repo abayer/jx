@@ -447,7 +447,7 @@ func (o *StepVerifyEnvironmentsOptions) createDevEnvironmentRepository(gitInfo *
 				Name: "gh",
 				Kind: "github",
 			}
-			fromProvider, err = gits.CreateProvider(ghServer, &auth.UserAuth{}, gitter)
+			fromProvider, err = gits.NewAnonymousGitHubProvider(ghServer, gitter)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to configure anonymous GitHub provider for upstream boot config URL %s", fromGitURL)
 			}
