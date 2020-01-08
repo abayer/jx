@@ -960,7 +960,7 @@ func IsDefaultBootConfigURL(url string) (bool, error) {
 		return false, errors.Wrap(err, "couldn't parse provided repo URL")
 	}
 	defaultInfo, err := ParseGitURL(jxconfig.DefaultBootRepository)
-	if err !=  nil {
+	if err != nil {
 		return false, errors.Wrap(err, "couldn't parse default boot config URL")
 	}
 	return gitInfo.HttpsURL() == defaultInfo.HttpsURL(), nil
