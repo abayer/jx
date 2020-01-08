@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/util"
 
 	"github.com/jenkins-x/jx/pkg/tests"
@@ -2472,4 +2473,31 @@ func TestIsCouldntFindRemoteRefErrorHandlesUppercaseRef(t *testing.T) {
 	error := errors.New(" fatal: couldn't find remote ref add-app-your-app-0.0.0-SNAPSHOT-PR-1234-1:")
 	ref := "add-app-your-app-0.0.0-SNAPSHOT-PR-1234-1"
 	assert.True(t, gits.IsCouldntFindRemoteRefError(error, ref))
+}
+
+func TestIsDefaultBootConfigURL(t *testing.T) {
+	wrongURL := "https://github.com/something-else/jenkins-x-boot-config.git"
+
+	var rightURLWithDotGit string
+	var rightURLWithoutDotGit string
+
+	if strings.HasSuffix(config.DefaultBootRepository, ".git") {
+		rightURLWithDotGit = config.DefaultBootRepository
+		rightURLWithoutDotGit = strings.TrimSuffix(config.DefaultBootRepository, ".git")
+	} else {
+		rightURLWithoutDotGit = config.DefaultBootRepository
+		rightURLWithDotGit = config.DefaultBootRepository + ".git"
+	}
+
+	withWrongURL, err := gits.IsDefaultBootConfigURL(wrongURL)
+	assert.NoError(t, err)
+	assert.False(t, withWrongURL)
+
+	withRightURLDotGit, err := gits.IsDefaultBootConfigURL(rightURLWithDotGit)
+	assert.NoError(t, err)
+	assert.True(t, withRightURLDotGit)
+
+	withRightURLNoDotGit, err := gits.IsDefaultBootConfigURL(rightURLWithoutDotGit)
+	assert.NoError(t, err)
+	assert.True(t, withRightURLNoDotGit)
 }
