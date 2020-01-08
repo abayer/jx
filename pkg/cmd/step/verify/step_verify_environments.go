@@ -428,8 +428,8 @@ func (o *StepVerifyEnvironmentsOptions) createDevEnvironmentRepository(gitInfo *
 	}
 
 	var fromProvider gits.GitProvider
-	// If the to provider isn't github.com, and the fromGitURL is the default boot repository, use a non-authenticated github.com provider for the from provider.
-	if !provider.IsGitHub() && fromGitURL == config.DefaultBootRepository {
+	// If the to URL isn't github.com, and the fromGitURL is the default boot repository, use a non-authenticated github.com provider for the from provider.
+	if !gitInfo.IsGitHub() && fromGitURL == config.DefaultBootRepository {
 		fromGitInfo, err := gits.ParseGitURL(fromGitURL)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse upstream boot config URL %s", fromGitURL)
