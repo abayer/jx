@@ -401,7 +401,11 @@ func (o *StepVerifyEnvironmentsOptions) handleDevEnvironmentRepository(envGitInf
 }
 
 func (o *StepVerifyEnvironmentsOptions) createDevEnvironmentRepository(gitInfo *gits.GitRepository, localRepoDir string, fromGitURL string, fromGitRef string, privateRepo bool, requirements *config.RequirementsConfig, provider gits.GitProvider, gitter gits.Gitter) (*gits.GitRepository, error) {
-	if fromGitURL == config.DefaultBootRepository && fromGitRef == "master" {
+	isDefaultBootURL, err := gits.IsDefaultBootConfigURL(fromGitURL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to verify whether %s is the default boot config repository", fromGitURL)
+	}
+	if isDefaultBootURL && fromGitRef == "master" {
 		// If the GitURL is not overridden and the GitRef is set to it's default value then look up the version number
 		resolver, err := o.CreateVersionResolver(requirements.VersionStream.URL, requirements.VersionStream.Ref)
 		if err != nil {
@@ -429,9 +433,9 @@ func (o *StepVerifyEnvironmentsOptions) createDevEnvironmentRepository(gitInfo *
 
 	var fromProvider gits.GitProvider
 	log.Logger().Warnf("gitInfo is github: %t", gitInfo.IsGitHub())
-	log.Logger().Warnf("fromGitUrl: %s", fromGitURL)
+	log.Logger().Warnf("isDefault: %t", isDefaultBootURL)
 	// If the to URL isn't github.com, and the fromGitURL is the default boot repository, use a non-authenticated github.com provider for the from provider.
-	if !gitInfo.IsGitHub() && fromGitURL == config.DefaultBootRepository {
+	if !gitInfo.IsGitHub() && isDefaultBootURL {
 		fromGitInfo, err := gits.ParseGitURL(fromGitURL)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse upstream boot config URL %s", fromGitURL)

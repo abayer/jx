@@ -16,9 +16,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/jenkins-x/jx/pkg/util"
-
+	jxconfig "github.com/jenkins-x/jx/pkg/config"
 	"github.com/jenkins-x/jx/pkg/log"
+	"github.com/jenkins-x/jx/pkg/util"
 
 	"github.com/pkg/errors"
 )
@@ -951,4 +951,17 @@ func RefIsBranch(dir string, ref string, gitter Gitter) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// IsDefaultBootConfigURL checks if the given URL corresponds to the default boot config URL
+func IsDefaultBootConfigURL(url string) (bool, error) {
+	gitInfo, err := ParseGitURL(url)
+	if err != nil {
+		return false, errors.Wrap(err, "couldn't parse provided repo URL")
+	}
+	defaultInfo, err := ParseGitURL(jxconfig.DefaultBootRepository)
+	if err !=  nil {
+		return false, errors.Wrap(err, "couldn't parse default boot config URL")
+	}
+	return gitInfo.HttpsURL() == defaultInfo.HttpsURL(), nil
 }
