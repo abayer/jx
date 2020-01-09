@@ -158,11 +158,6 @@ func (o *UpgradeAppsOptions) Run() error {
 		if !o.HelmUpdate {
 			return util.InvalidOptionf(optionHelmUpdate, o.HelmUpdate, msg, optionHelmUpdate)
 		}
-		environmentsDir, err := o.EnvironmentsDir()
-		if err != nil {
-			return errors.Wrapf(err, "getting environments dir")
-		}
-		installOpts.EnvironmentsDir = environmentsDir
 
 		gitProvider, _, err := o.CreateGitProviderForURLWithoutKind(o.DevEnv.Spec.Source.URL)
 		if err != nil {

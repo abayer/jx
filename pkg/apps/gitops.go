@@ -42,7 +42,7 @@ func (o *GitOpsOptions) AddApp(app string, dir string, version string, repositor
 		GitProvider: o.GitProvider,
 	}
 
-	info, err := options.Create(o.DevEnv, o.EnvironmentsDir, &details, nil, "", autoMerge)
+	info, err := options.Create(o.DevEnv, dir, &details, nil, "", autoMerge)
 	if err != nil {
 		return errors.Wrapf(err, "creating pr for %s", app)
 	}
@@ -104,7 +104,11 @@ func (o *GitOpsOptions) UpgradeApp(app string, version string, repository string
 			o.Helmer, inspectChartFunc, o.Verbose, o.valuesFiles),
 		GitProvider: o.GitProvider,
 	}
-	_, err = options.Create(o.DevEnv, o.EnvironmentsDir, &details, nil, app, autoMerge)
+	dir, err := ioutil.TempDir("", "create-pr")
+	if err != nil {
+		return err
+	}
+	_, err = options.Create(o.DevEnv, dir, &details, nil, app, autoMerge)
 	if err != nil {
 		return err
 	}
@@ -156,7 +160,11 @@ func (o *GitOpsOptions) DeleteApp(app string, alias string, autoMerge bool) erro
 		GitProvider:   o.GitProvider,
 	}
 
-	info, err := options.Create(o.DevEnv, o.EnvironmentsDir, &details, nil, "", autoMerge)
+	dir, err := ioutil.TempDir("", "create-pr")
+	if err != nil {
+		return err
+	}
+	info, err := options.Create(o.DevEnv, dir, &details, nil, "", autoMerge)
 	if err != nil {
 		return err
 	}
@@ -166,9 +174,17 @@ func (o *GitOpsOptions) DeleteApp(app string, alias string, autoMerge bool) erro
 
 // GetApps retrieves all the apps information for the given appNames from the repository and / or the CRD API
 func (o *GitOpsOptions) GetApps(appNames map[string]bool, expandFn func([]string) (*v1.AppList, error)) (*v1.AppList, error) {
-	dir, _, _, _, err := gits.ForkAndPullRepo(o.DevEnv.Spec.Source.URL, o.EnvironmentsDir, o.DevEnv.Spec.Source.Ref, "master", o.GitProvider, o.Gitter, "")
+	dir, err := ioutil.TempDir("", "create-pr")
 	if err != nil {
-		return nil, errors.Wrapf(err, "couldn't pull the environment repository from %s", o.DevEnv.Name)
+		return nil, err
+	}
+	err = o.Gitter.Clone(o.DevEnv.Spec.Source.URL, dir)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to clone %s to dir %s", o.DevEnv.Spec.Source.URL, dir)
+	}
+	err = o.Gitter.Checkout(dir, o.DevEnv.Spec.Source.Ref)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to checkout %s to dir %s", o.DevEnv.Spec.Source.Ref, dir)
 	}
 
 	envDir := filepath.Join(dir, helm.DefaultEnvironmentChartDir)

@@ -150,10 +150,8 @@ func (o *GetAppsOptions) Run() error {
 		if err != nil {
 			return errors.Wrapf(err, "creating git provider for %s", o.DevEnv.Spec.Source.URL)
 		}
-		environmentsDir := envsDir
 		installOptions.GitProvider = gitProvider
 		installOptions.Gitter = o.Git()
-		installOptions.EnvironmentsDir = environmentsDir
 	}
 
 	apps, err := installOptions.GetApps(o.Args)

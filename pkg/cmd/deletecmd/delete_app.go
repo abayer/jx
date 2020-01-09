@@ -45,6 +45,7 @@ type DeleteAppOptions struct {
 	Namespace   string
 	Purge       bool
 	Alias       string
+	AutoMerge   bool
 }
 
 // NewCmdDeleteApp creates a command object for this command
@@ -73,6 +74,7 @@ func NewCmdDeleteApp(commonOpts *opts.CommonOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&o.Namespace, opts.OptionNamespace, "n", defaultNamespace, "The Namespace to install into (available when NOT using GitOps for your dev environment)")
 	cmd.Flags().StringVarP(&o.Alias, opts.OptionAlias, "", "",
 		"An alias to use for the app (available when using GitOps for your dev environment)")
+	cmd.Flags().BoolVarP(&o.AutoMerge, "auto-merge", "", false, "Automatically merge GitOps pull requests that pass CI")
 
 	return cmd
 }
@@ -88,6 +90,7 @@ func (o *DeleteAppOptions) Run() error {
 		GitOps:        o.GitOps,
 		BatchMode:     o.BatchMode,
 		Helmer:        o.Helm(),
+		AutoMerge:     o.AutoMerge,
 	}
 
 	if o.GitOps {
@@ -102,13 +105,8 @@ func (o *DeleteAppOptions) Run() error {
 		if err != nil {
 			return errors.Wrapf(err, "creating git provider for %s", o.DevEnv.Spec.Source.URL)
 		}
-		environmentsDir, err := o.EnvironmentsDir()
-		if err != nil {
-			return errors.Wrapf(err, "getting environments dir")
-		}
 		installOptions.GitProvider = gitProvider
 		installOptions.Gitter = o.Git()
-		installOptions.EnvironmentsDir = environmentsDir
 	}
 	if !o.GitOps {
 		err := o.EnsureHelm()

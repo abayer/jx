@@ -104,7 +104,11 @@ func (o *InstallOptions) AddApp(app string, version string, repository string, u
 			opts := GitOpsOptions{
 				InstallOptions: o,
 			}
-			err := opts.AddApp(chartDetails.Name, dir, chartDetails.Version, repository, alias, o.AutoMerge)
+			dir, err := ioutil.TempDir("", "create-pr")
+			if err != nil {
+				return err
+			}
+			err = opts.AddApp(chartDetails.Name, dir, chartDetails.Version, repository, alias, o.AutoMerge)
 			if err != nil {
 				return errors.Wrapf(err, "adding app %s version %s with alias %s using gitops", chartName, version, alias)
 			}
