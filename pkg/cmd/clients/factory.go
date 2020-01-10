@@ -326,8 +326,10 @@ func (f *factory) createAuthConfigServiceVault(fileName string, namespace string
 	var authService auth.ConfigService
 	configMapClient := client.CoreV1().ConfigMaps(namespace)
 	if auth.IsConfigMapVaultAuth(configMapClient) {
+		log.Logger().Warnf("CONFIGMAP VAULT SERVICE TIME")
 		authService = auth.NewConfigmapVaultAuthConfigService(fileName, configMapClient, vaultClient)
 	} else {
+		log.Logger().Warnf("REGULAR VAULT SERVICE TIME")
 		authService = auth.NewVaultAuthConfigService(fileName, vaultClient)
 	}
 	if _, err := authService.LoadConfig(); err != nil {
@@ -364,6 +366,7 @@ func (f *factory) createAuthConfigServiceFile(fileName string, serverKind string
 func (f *factory) CreateAuthConfigService(fileName string, namespace string,
 	serverKind string, serviceKind string) (auth.ConfigService, error) {
 	if f.SecretsLocation() == secrets.VaultLocationKind {
+		log.Logger().Warnf("AUTH CONFIG VAULT")
 		if authService, err := f.createAuthConfigServiceVault(fileName, namespace); err == nil {
 			return authService, nil
 		}
@@ -375,14 +378,14 @@ func (f *factory) CreateAuthConfigService(fileName string, namespace string,
 	}
 
 	if cluster.IsInCluster() {
-		log.Logger().Debugf("No auth config found in Kubernetes secrets %s/%s. Trying to load it from file %s.",
+		log.Logger().Warnf("No auth config found in Kubernetes secrets %s/%s. Trying to load it from file %s.",
 			serverKind, serviceKind, fileName)
 	}
 
 	if authService, err := f.createAuthConfigServiceFile(fileName, serverKind); err == nil {
 		return authService, nil
 	}
-	log.Logger().Debugf("No auth config found in file %s", fileName)
+	log.Logger().Warnf("No auth config found in file %s", fileName)
 
 	return nil, fmt.Errorf("no auth config found for secret %q", fileName)
 }

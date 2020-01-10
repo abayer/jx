@@ -2,7 +2,9 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/secreturl"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,7 @@ func (c *ConfigMapVaultConfigHandler) LoadConfig() (*AuthConfig, error) {
 	listOptions := metav1.ListOptions{
 		LabelSelector: selector,
 	}
+	log.Logger().Warnf("LOOKING FOR CONFIG MAP WITH SELECTOR %s", selector)
 	configList, err := c.configMapClient.List(listOptions)
 	if err != nil || configList == nil {
 		return nil, errors.Wrapf(err, "looking for configmaps with label %s", selector)
@@ -30,7 +33,7 @@ func (c *ConfigMapVaultConfigHandler) LoadConfig() (*AuthConfig, error) {
 	if len(configList.Items) == 0 {
 		return nil, fmt.Errorf("no configmap with label %s found", selector)
 	}
-
+	log.Logger().Warnf("FOUND CONFIG MAPS, LOOKING FOR ONE WITH %s", c.secretName)
 	var data string
 	for _, config := range configList.Items {
 		if d, ok := config.Data[c.secretName]; ok {
@@ -42,7 +45,7 @@ func (c *ConfigMapVaultConfigHandler) LoadConfig() (*AuthConfig, error) {
 		return nil, fmt.Errorf("no configmap with label %s found with data key %s",
 			selector, c.secretName)
 	}
-
+	log.Logger().Warnf("FOUND ONE, NOT LOGGING ITS CONTENTS")
 	if data, err = c.secretURLClient.ReplaceURIs(data); err != nil {
 		return nil, errors.Wrapf(err, "replacing the secrets in auth config %q from vault", c.secretName)
 	}
@@ -51,7 +54,11 @@ func (c *ConfigMapVaultConfigHandler) LoadConfig() (*AuthConfig, error) {
 	if err := yaml.Unmarshal([]byte(data), &config); err != nil {
 		return nil, errors.Wrapf(err, "unmarshaling auth config %q", c.secretName)
 	}
-
+	var serverNames []string
+	for _, s := range config.Servers {
+		serverNames = append(serverNames, s.Name)
+	}
+	log.Logger().Warnf("GOT IT UNMARSHALED HERE ARE SOME SERVERS %s", strings.Join(serverNames, ", "))
 	return &config, nil
 }
 
