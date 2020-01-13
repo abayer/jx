@@ -130,7 +130,7 @@ func (o *CommonOptions) GetDomain(client kubernetes.Interface, domain string, pr
 			resolve := true
 			if !o.BatchMode {
 				answer, err := util.Confirm("Would you like wait and resolve this address to an IP address and use it for the domain?", true,
-				"Should we convert "+address+" to an IP address so we can access resources externally", o.GetIOFileHandles())
+					"Should we convert "+address+" to an IP address so we can access resources externally", o.GetIOFileHandles())
 				if err != nil {
 					return "", err
 				}

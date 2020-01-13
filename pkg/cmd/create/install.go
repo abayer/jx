@@ -1797,7 +1797,7 @@ func (options *InstallOptions) applyGitOpsDevEnvironmentConfig(gitOpsEnvDir stri
 		if !options.BatchMode {
 			if answer, err := util.Confirm("Would you like to setup the Development Environment from the source code now?", true, "Do you want to apply the development environment helm charts now?", options.GetIOFileHandles()); err != nil {
 				return err
-			} else if (!answer) {
+			} else if !answer {
 				applyEnv = false
 			}
 		}
