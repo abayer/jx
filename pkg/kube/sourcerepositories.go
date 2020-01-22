@@ -49,7 +49,10 @@ func FindSourceRepository(jxClient versioned.Interface, ns string, owner string,
 	var errToReturn error
 	repo, err := jxClient.JenkinsV1().SourceRepositories(ns).Get(resourceName, metav1.GetOptions{})
 	if err != nil {
+		log.Logger().Warnf("err found")
 		if apierrors.IsNotFound(err) {
+			log.Logger().Warnf("not found err")
+			repo = nil
 			labelSelector := fmt.Sprintf("%s=%s,%s=%s", v1.LabelOwner, owner, v1.LabelRepository, name)
 			if providerName != "" {
 				labelSelector += fmt.Sprintf(",%s=%s", v1.LabelProvider, providerName)
