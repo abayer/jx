@@ -239,6 +239,8 @@ func (options *ImportOptions) Run() error {
 		return err
 	}
 
+	oy, _ := yaml.Marshal(options)
+	log.Logger().Warnf("options: %s", oy)
 	var userAuth *auth.UserAuth
 	if options.GitProvider == nil {
 		authConfigSvc, err := options.GitLocalAuthConfigService()
@@ -248,6 +250,7 @@ func (options *ImportOptions) Run() error {
 		config := authConfigSvc.Config()
 		var server *auth.AuthServer
 		if options.RepoURL != "" {
+			log.Logger().Warnf("getting server: repoURL is %s", options.RepoURL)
 			gitInfo, err := gits.ParseGitURL(options.RepoURL)
 			if err != nil {
 				return err
@@ -1557,6 +1560,8 @@ func (options *ImportOptions) DefaultsFromTeamSettings() error {
 
 // DefaultValuesFromTeamSettings defaults the repository options from the given team settings
 func (options *ImportOptions) DefaultValuesFromTeamSettings(settings *v1.TeamSettings) error {
+	tsy, _ := yaml.Marshal(settings)
+	log.Logger().Warnf("team settings: %s", tsy)
 	if options.DeployKind == "" {
 		options.DeployKind = settings.DeployKind
 	}

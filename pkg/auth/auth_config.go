@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
@@ -396,9 +397,12 @@ func (c *AuthConfig) GetServerURLs() []string {
 func (c *AuthConfig) PickOrCreateServer(fallbackServerURL string, serverURL string, message string, batchMode bool, handles util.IOFileHandles) (*AuthServer, error) {
 	servers := c.Servers
 	if len(servers) == 0 {
+		log.Logger().Warnf("no servers")
 		if serverURL != "" {
+			log.Logger().Warnf("using serverURL %s", serverURL)
 			return c.GetOrCreateServer(serverURL), nil
 		}
+		log.Logger().Warnf("using fallback server %s", fallbackServerURL)
 		return c.GetOrCreateServer(fallbackServerURL), nil
 	}
 	// lets let the user pick which server to use defaulting to the current server
