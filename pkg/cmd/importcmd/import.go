@@ -239,7 +239,7 @@ func (options *ImportOptions) Run() error {
 		return err
 	}
 
-	oy, _ := yaml.Marshal(options)
+	oy, _ := yaml.Marshal(options.GitRepositoryOptions)
 	log.Logger().Warnf("options: %s", oy)
 	var userAuth *auth.UserAuth
 	if options.GitProvider == nil {
