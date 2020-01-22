@@ -10,10 +10,12 @@ import (
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/client/clientset/versioned"
 	"github.com/jenkins-x/jx/pkg/kube/naming"
+	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // GetRepositoryGitURL returns the git repository clone URL
@@ -147,14 +149,16 @@ func GetOrCreateSourceRepositoryCallback(jxClient versioned.Interface, ns string
 		return foundSr, nil
 	}
 
+	sry, _ := yaml.Marshal(srCopy)
+	log.Logger().Warnf("sr: %s", sry)
 	// Otherwise, update the SourceRepository and return it.
 	answer, err := repositories.Update(srCopy)
 	if err != nil {
-		return answer, errors.Wrapf(err, "failed to update SourceRepository %s", resourceName)
+		return answer, errors.Wrapf(err, "failed to update SourceRepository %s", srCopy.Name)
 	}
 	answer, err = repositories.Get(foundSr.Name, metav1.GetOptions{})
 	if err != nil {
-		return answer, errors.Wrapf(err, "failed to get SourceRepository %s", resourceName)
+		return answer, errors.Wrapf(err, "failed to get SourceRepository %s", foundSr.Name)
 	}
 
 	return answer, nil
