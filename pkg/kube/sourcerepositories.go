@@ -74,6 +74,12 @@ func FindSourceRepository(jxClient versioned.Interface, ns string, owner string,
 	if repo == nil && !doNotFailIfNotFound {
 		return nil, fmt.Errorf("couldn't find SourceRepository for owner %s, repository %s, optional provider %s in namespace %s", owner, name, providerName, ns)
 	}
+	if repo != nil {
+		ry, _ := yaml.Marshal(repo)
+		log.Logger().Warnf("found: %s", ry)
+	} else {
+		log.Logger().Warnf("didn't find?")
+	}
 	return repo, nil
 }
 
