@@ -10,6 +10,7 @@ import (
 	"time"
 
 	errors2 "github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 
 	"github.com/google/go-github/github"
 	"github.com/jenkins-x/jx/pkg/auth"
@@ -279,7 +280,9 @@ func (g *GitlabProvider) CreatePullRequest(data *GitPullRequestArguments) (*GitP
 	if err != nil {
 		return nil, err
 	}
-
+	mry, _ := yaml.Marshal(mr)
+	log.Logger().Warnf("MR FULL: %s", mry)
+	log.Logger().Warnf("MR URL: %s", mr.WebURL)
 	return fromMergeRequest(mr, owner, repo), nil
 }
 
