@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 
+	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/secreturl"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,7 @@ func (c *ConfigMapVaultConfigHandler) LoadConfig() (*AuthConfig, error) {
 			break
 		}
 	}
+	log.Logger().Warnf("loading data %s from configmap", data)
 	if data == "" {
 		return nil, fmt.Errorf("no configmap with label %s found with data key %s",
 			selector, c.secretName)

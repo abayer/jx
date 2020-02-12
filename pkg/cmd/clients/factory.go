@@ -310,6 +310,7 @@ func (f *factory) CreateAddonAuthConfigService(namespace string, serviceKind str
 }
 
 func (f *factory) CreateGitAuthConfigService(namespace string, serviceKind string) (auth.ConfigService, error) {
+	log.Logger().Warnf("creating auth config service for %s in %s", serviceKind, namespace)
 	authConfigSvc, err := f.CreateAuthConfigService(auth.GitAuthConfigFile, namespace, kube.ValueKindGit, serviceKind)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating auth config service for git/gitprovider")
@@ -329,8 +330,10 @@ func (f *factory) createAuthConfigServiceVault(fileName string, namespace string
 	var authService auth.ConfigService
 	configMapClient := client.CoreV1().ConfigMaps(namespace)
 	if auth.IsConfigMapVaultAuth(configMapClient) {
+		log.Logger().Warnf("configmap driven time for %s", fileName)
 		authService = auth.NewConfigmapVaultAuthConfigService(fileName, configMapClient, vaultClient)
 	} else {
+		log.Logger().Warnf("just vault instead for %s", fileName)
 		authService = auth.NewVaultAuthConfigService(fileName, vaultClient)
 	}
 	if _, err := authService.LoadConfig(); err != nil {
@@ -367,12 +370,13 @@ func (f *factory) createAuthConfigServiceFile(fileName string, serverKind string
 func (f *factory) CreateAuthConfigService(fileName string, namespace string,
 	serverKind string, serviceKind string) (auth.ConfigService, error) {
 	if f.SecretsLocation() == secrets.VaultLocationKind {
+		log.Logger().Warnf("it's vault, go create service for filename %s", fileName)
 		if authService, err := f.createAuthConfigServiceVault(fileName, namespace); err == nil {
 			return authService, nil
 		}
 		log.Logger().Debugf("No auth config found in vault for %s. Trying to load it from Kubernetes secrets.", fileName)
 	}
-
+	log.Logger().Warnf("falling back to kube instead")
 	if authService, err := f.createAuthConfigServiceKube(namespace, serverKind, serviceKind); err == nil {
 		return authService, nil
 	}
@@ -382,6 +386,7 @@ func (f *factory) CreateAuthConfigService(fileName string, namespace string,
 			serverKind, serviceKind, fileName)
 	}
 
+	log.Logger().Warnf("and finally to file for %s", fileName)
 	if authService, err := f.createAuthConfigServiceFile(fileName, serverKind); err == nil {
 		return authService, nil
 	}
