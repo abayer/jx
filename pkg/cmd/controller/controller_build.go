@@ -1298,6 +1298,7 @@ func (o *ControllerBuildOptions) reportStatus(kubeClient kubernetes.Interface, n
 		Build:      activity.Spec.Build,
 		Context:    pipelineContext,
 		BaseURL:    strings.TrimRight(o.JobURLBase, "/"),
+		Namespace:  ns,
 	})
 	gitRepoStatus := &gits.GitRepoStatus{
 		State:       status,
@@ -1323,7 +1324,7 @@ func (o *ControllerBuildOptions) reportStatus(kubeClient kubernetes.Interface, n
 
 // ReportParams contains the parameters for target URL templates
 type ReportParams struct {
-	BaseURL, Owner, Repository, Branch, Build, Context string
+	BaseURL, Owner, Repository, Branch, Build, Context, Namespace string
 }
 
 // CreateReportTargetURL creates the target URL for pipeline results/logs from a template
