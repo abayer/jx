@@ -1304,7 +1304,7 @@ func (o *ControllerBuildOptions) reportStatus(kubeClient kubernetes.Interface, n
 		State:       status,
 		Context:     pipelineContext,
 		Description: description,
-		URL:         targetURL,
+		TargetURL:   targetURL,
 	}
 
 	log.Logger().Warnf("For activity %s, url is %s", activity.Name, targetURL)
