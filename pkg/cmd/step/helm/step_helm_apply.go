@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mholt/archiver"
 	"github.com/pkg/errors"
+	"github.com/sanathkr/go-yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/jenkins-x/jx/pkg/cmd/helper"
@@ -265,6 +266,7 @@ func (o *StepHelmApplyOptions) getRequirements() (*config.RequirementsConfig, st
 	// Try to load first the requirements from current directory
 	requirements, requirementsFileName, err := config.LoadRequirementsConfig(o.Dir)
 	if err == nil {
+		log.Logger().Warnf("Got a requirements with filename %s", requirementsFileName)
 		return requirements, requirementsFileName, nil
 	}
 
@@ -288,8 +290,11 @@ func (o *StepHelmApplyOptions) getRequirements() (*config.RequirementsConfig, st
 
 	requirements, err = config.GetRequirementsConfigFromTeamSettings(teamSettings)
 	if err != nil {
+		log.Logger().Warnf("fell through to an error")
 		return nil, "", errors.Wrap(err, "getting the requirements from team settings")
 	}
+	rqy, _ := yaml.Marshal(requirements)
+	log.Logger().Warnf("reqs returned: %s", rqy)
 	return requirements, "", nil
 }
 
