@@ -46,6 +46,8 @@ pipelineConfig:
                   - name: kaniko-secret
                     mountPath: /secrets
             steps:
+              - name: fail
+                command: exit 1
               - name: build-binary
                 image: docker.io/golang:1.12.4
                 command: make

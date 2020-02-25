@@ -247,144 +247,16 @@ func (o *StepHelmApplyOptions) Run() error {
 		}()
 	}
 
-	requirements, requirementsFileName, err := o.getRequirements()
+	requirements, _, err := o.getRequirements()
 	if err != nil {
 		return errors.Wrap(err, "loading the requirements")
 	}
 
-	secretURLClient, err := o.GetSecretURLClient(secrets.ToSecretsLocation(string(requirements.SecretStorage)))
+	_, err = o.GetSecretURLClient(secrets.ToSecretsLocation(string(requirements.SecretStorage)))
 	if err != nil {
 		return errors.Wrap(err, "failed to create a Secret RL client")
 	}
 
-	DefaultEnvironments(requirements, devGitInfo)
-
-	funcMap, err := o.createFuncMap(requirements)
-	if err != nil {
-		return err
-	}
-	chartValues, params, err := helm.GenerateValues(requirements, funcMap, dir, nil, true, secretURLClient)
-	if err != nil {
-		return errors.Wrapf(err, "generating values.yaml for tree from %s", dir)
-	}
-	if o.ProviderValuesDir != "" && requirementsFileName != "" {
-		chartValues, err = o.overwriteProviderValues(requirements, requirementsFileName, chartValues, params, o.ProviderValuesDir)
-		if err != nil {
-			return errors.Wrapf(err, "failed to overwrite provider values in dir: %s", dir)
-		}
-	}
-
-	chartValuesFile := filepath.Join(dir, helm.ValuesFileName)
-	err = ioutil.WriteFile(chartValuesFile, chartValues, 0755)
-	if err != nil {
-		return errors.Wrapf(err, "writing values.yaml for tree to %s", chartValuesFile)
-	}
-	log.Logger().Debugf("Wrote chart values.yaml %s generated from directory tree", chartValuesFile)
-
-	data, err := ioutil.ReadFile(chartValuesFile)
-	if err != nil {
-		log.Logger().Warnf("failed to load file %s: %s", chartValuesFile, err.Error())
-	} else {
-		log.Logger().Debugf("generated helm %s", chartValuesFile)
-
-		valuesText := string(data)
-		if !o.NoMasking {
-			masker := kube.NewLogMaskerFromMap(params.AsMap())
-			valuesText = masker.MaskLog(valuesText)
-		}
-
-		log.Logger().Debugf("\n%s\n", util.ColorStatus(valuesText))
-	}
-
-	log.Logger().Debugf("Using values files: %s", strings.Join(valueFiles, ", "))
-
-	if o.Boot {
-		err = o.replaceMissingVersionsFromVersionStream(requirements, dir)
-		if err != nil {
-			return errors.Wrapf(err, "failed to replace missing versions in the requirements.yaml in dir %s", dir)
-		}
-	}
-
-	_, err = o.HelmInitDependencyBuild(dir, o.DefaultReleaseCharts(), valueFiles)
-	if err != nil {
-		return err
-	}
-
-	// Now let's unpack all the dependencies and apply the vault URLs
-	dependencies, err := filepath.Glob(filepath.Join(dir, "charts", "*.tgz"))
-	if err != nil {
-		return errors.Wrapf(err, "finding chart dependencies in %s", filepath.Join(dir, "charts"))
-	}
-	for _, src := range dependencies {
-		dest, err := ioutil.TempDir("", "")
-		if err != nil {
-			return errors.Wrapf(err, "creating temp dir")
-		}
-		err = archiver.Unarchive(src, dest)
-		if err != nil {
-			return errors.Wrapf(err, "untarring %s to %s", src, dest)
-		}
-		err = os.Remove(src)
-		if err != nil {
-			return errors.Wrapf(err, "removing %s", src)
-		}
-		filepath.Walk(dest, func(path string, info os.FileInfo, err error) error {
-			if filepath.Base(path) == helm.ValuesFileName {
-
-				newFiles, cleanup, err := helm.DecorateWithSecrets([]string{path}, secretURLClient)
-				defer cleanup()
-				if err != nil {
-					return errors.Wrapf(err, "decorating %s with secrets", path)
-				}
-				err = util.CopyFile(newFiles[0], path)
-				if err != nil {
-					return errors.Wrapf(err, "moving decorated file %s to %s", newFiles[0], path)
-				}
-			}
-			return nil
-		})
-		dirs, err := filepath.Glob(filepath.Join(dest, "*"))
-		if err != nil {
-			return errors.Wrapf(err, "list %s", filepath.Join(dest, "*"))
-		}
-		err = archiver.Archive(dirs, src)
-	}
-
-	err = o.applyAppsTemplateOverrides(chartName)
-	if err != nil {
-		return errors.Wrap(err, "applying app chart overrides")
-	}
-	err = o.applyTemplateOverrides(chartName)
-	if err != nil {
-		return errors.Wrap(err, "applying chart overrides")
-	}
-
-	setValues, setStrings := o.getChartValues(ns)
-
-	helmOptions := helm.InstallChartOptions{
-		Chart:       chartName,
-		ReleaseName: releaseName,
-		Ns:          ns,
-		NoForce:     !o.Force,
-		SetValues:   setValues,
-		SetStrings:  setStrings,
-		ValueFiles:  valueFiles,
-		Dir:         dir,
-	}
-	if o.Boot {
-		helmOptions.VersionsGitURL = requirements.VersionStream.URL
-		helmOptions.VersionsGitRef = requirements.VersionStream.Ref
-	}
-
-	if o.Wait {
-		helmOptions.Wait = true
-		err = o.InstallChartWithOptionsAndTimeout(helmOptions, "600")
-	} else {
-		err = o.InstallChartWithOptions(helmOptions)
-	}
-	if err != nil {
-		return errors.Wrapf(err, "upgrading helm chart '%s'", chartName)
-	}
 	return nil
 }
 
