@@ -104,7 +104,7 @@ func NewCmdStepHelmApply(commonOpts *opts.CommonOptions) *cobra.Command {
 
 func (o *StepHelmApplyOptions) Run() error {
 	var err error
-	chartName := o.Dir
+	//chartName := o.Dir
 	dir := o.Dir
 	releaseName := o.ReleaseName
 
@@ -177,7 +177,7 @@ func (o *StepHelmApplyOptions) Run() error {
 	}
 	dir = path
 
-	devGitInfo, err := o.FindGitInfo(dir)
+	_, err = o.FindGitInfo(dir)
 	if err != nil {
 		log.Logger().Warnf("could not find a git repository in the directory %s: %s\n", dir, err.Error())
 	}
