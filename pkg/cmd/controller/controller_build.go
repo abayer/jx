@@ -768,6 +768,14 @@ func (o *ControllerBuildOptions) updatePipelineActivityForRun(kubeClient kuberne
 		}
 	}
 
+	// Set the base SHA if present in the run info
+	if pri.BaseSHA != "" {
+		log.Logger().Warnf("Setting base sha to %s", pri.BaseSHA)
+		spec.BaseSHA = pri.BaseSHA
+	} else {
+		log.Logger().Warnf("Not setting base sha because it's empty")
+	}
+
 	// TODO this is a tactical approach until we move all the reporting of tekton pipelines into tekton outputs
 	o.reportStatus(kubeClient, ns, activity, pri, pod)
 
