@@ -61,7 +61,7 @@ func (o *EnvironmentPullRequestOptions) Create(env *jenkinsv1.Environment, prDir
 			return nil, err
 		}
 		prDir = tempDir
-		defer os.RemoveAll(tempDir)
+//		defer os.RemoveAll(tempDir)
 	}
 
 	dir, base, upstreamRepo, forkURL, err := gits.ForkAndPullRepo(env.Spec.Source.URL, prDir, env.Spec.Source.Ref, pullRequestDetails.BranchName, o.GitProvider, o.Gitter, "")
