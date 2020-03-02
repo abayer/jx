@@ -91,10 +91,12 @@ func (o *EnvironmentPullRequestOptions) Create(env *jenkinsv1.Environment, prDir
 
 // ModifyChartFiles modifies the chart files in the given directory using the given modify function
 func ModifyChartFiles(dir string, details *gits.PullRequestDetails, modifyFn ModifyChartFn, chartName string) error {
+	log.Logger().Warnf("looking for reqs file in %s", dir)
 	requirementsFile, err := helm.FindRequirementsFileName(dir)
 	if err != nil {
 		return err
 	}
+	log.Logger().Warnf("found reqs file %s", requirementsFile)
 	requirements, err := helm.LoadRequirementsFile(requirementsFile)
 	if err != nil {
 		return err
