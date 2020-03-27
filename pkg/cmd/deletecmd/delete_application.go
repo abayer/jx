@@ -144,6 +144,7 @@ func (o *DeleteApplicationOptions) Run() error {
 
 func matchesWithAnyEnvironmentURL(s string, environments map[string]*v1.Environment) bool {
 	for _, environment := range environments {
+		log.Logger().Warnf("env URL: %s, app: %s", environment.Spec.Source.URL, s)
 		if strings.Contains(environment.Spec.Source.URL, s) {
 			return true
 		}
@@ -192,7 +193,7 @@ func (o *DeleteApplicationOptions) deleteProwApplication(repoService jenkinsv1.S
 
 	names := removeEnvironments(jobs, envMap)
 	if len(names) == 0 {
-		return deletedApplications, fmt.Errorf("There are no Applications in Jenkins")
+		return deletedApplications, fmt.Errorf("There are no Applications configured in Jenkins X")
 	}
 
 	srList, err := repoService.List(metav1.ListOptions{})
@@ -201,12 +202,12 @@ func (o *DeleteApplicationOptions) deleteProwApplication(repoService jenkinsv1.S
 	}
 
 	if len(o.Args) == 0 {
-		o.Args, err = util.SelectNamesWithFilter(names, "Pick Applications to remove from Prow:", o.SelectAll, o.SelectFilter, "", o.GetIOFileHandles())
+		o.Args, err = util.SelectNamesWithFilter(names, "Pick Applications to remove from Jenkins X:", o.SelectAll, o.SelectFilter, "", o.GetIOFileHandles())
 		if err != nil {
 			return deletedApplications, err
 		}
 		if len(o.Args) == 0 {
-			return deletedApplications, fmt.Errorf("No application was picked to be removed from Prow")
+			return deletedApplications, fmt.Errorf("No application was picked to be removed from Jenkins X")
 		}
 	} else {
 		for i := range o.Args {

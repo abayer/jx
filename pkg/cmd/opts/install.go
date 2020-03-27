@@ -1150,7 +1150,7 @@ func (o *CommonOptions) IsProw() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
+	log.Logger().Warnf("promotion engine: %s", env.Spec.TeamSettings.PromotionEngine)
 	return env.Spec.TeamSettings.PromotionEngine == jenkinsv1.PromotionEngineProw, nil
 }
 
