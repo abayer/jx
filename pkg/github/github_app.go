@@ -93,6 +93,7 @@ func (gh *GithubApp) isInstalled(owner string, repo string) (bool, bool, string,
 			err = json.Unmarshal(respBody, response)
 
 			if err != nil {
+				log.Logger().Warnf("body: %s", string(respBody))
 				return false, false, "", "", errors.Wrapf(err, "error marshalling response %s", url)
 			}
 			return response.Installed, response.AccessToRepo, response.URL, response.AppName, nil
