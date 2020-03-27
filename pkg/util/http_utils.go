@@ -109,7 +109,7 @@ func CallWithExponentialBackOff(url string, auth string, httpMethod string, reqB
 			return nil
 		}
 		exponentialBackOff := backoff.NewExponentialBackOff()
-		timeout := 1 * time.Minute
+		timeout := 10 * time.Second
 		exponentialBackOff.MaxElapsedTime = timeout
 		exponentialBackOff.Reset()
 		err := backoff.Retry(f, exponentialBackOff)

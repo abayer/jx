@@ -38,6 +38,10 @@ func (gh *GithubApp) isGithubAppEnabled() (bool, error) {
 
 // Install - confirms that the github app is installed and if it isn't then prints out a url for the user to install
 func (gh *GithubApp) Install(owner string, repo string, fileHandles util.IOFileHandles, newRepo bool) (bool, error) {
+	if repo == "" {
+		// If no repo name is defined, we definitely don't have a repository at this point so just return false
+		return false, nil
+	}
 	installed, accessToRepo, url, appName, err := gh.isInstalled(owner, repo)
 	if err != nil {
 		return false, errors.Wrap(err, "when querying whether the Github App is installed")
