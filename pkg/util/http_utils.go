@@ -93,6 +93,8 @@ func CallWithExponentialBackOff(url string, auth string, httpMethod string, reqB
 			}
 
 			resp, err = defaultClient.Do(req)
+			log.Logger().Warnf("resp status: %d", resp.StatusCode)
+			log.Logger().Warnf("response in full: %+v", resp)
 			if err != nil {
 				return backoff.Permanent(err)
 			}
