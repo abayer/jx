@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	gojenkins "github.com/jenkins-x/golang-jenkins"
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/cmd/helper"
 	"github.com/pkg/errors"
@@ -36,7 +35,6 @@ type GCActivitiesOptions struct {
 	PullRequestAgeLimit     time.Duration
 	PipelineRunAgeLimit     time.Duration
 	ProwJobAgeLimit         time.Duration
-	jclient                 gojenkins.JenkinsClient
 }
 
 var (
@@ -117,11 +115,6 @@ func (o *GCActivitiesOptions) Run() error {
 		return err
 	}
 
-	prowEnabled, err := o.IsProw()
-	if err != nil {
-		return err
-	}
-
 	// cannot use field selectors like `spec.kind=Preview` on CRDs so list all environments
 	activityInterface := client.JenkinsV1().PipelineActivities(currentNs)
 	activities, err := activityInterface.List(metav1.ListOptions{})
@@ -132,25 +125,6 @@ func (o *GCActivitiesOptions) Run() error {
 		// no preview environments found so lets return gracefully
 		log.Logger().Debug("no activities found")
 		return nil
-	}
-
-	var jobNames []string
-	if !prowEnabled {
-		o.jclient, err = o.JenkinsClient()
-		if err != nil {
-			return err
-		}
-
-		jobs, err := o.jclient.GetJobs()
-		if err != nil {
-			return err
-		}
-		for _, j := range jobs {
-			err = o.GetAllPipelineJobNames(o.jclient, &jobNames, j.Name)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	now := time.Now()
@@ -193,24 +167,7 @@ func (o *GCActivitiesOptions) Run() error {
 			}
 			continue
 		}
-
-		if !prowEnabled {
-			// if activity has no job in Jenkins delete it
-			matched := false
-			for _, j := range jobNames {
-				if a.Spec.Pipeline == j {
-					matched = true
-					break
-				}
-			}
-			if !matched {
-				err = o.deleteActivity(activityInterface, &a)
-				if err != nil {
-					return err
-				}
-			}
 		}
-	}
 
 	// Clean up completed PipelineRuns
 	err = o.gcPipelineRuns(currentNs)
