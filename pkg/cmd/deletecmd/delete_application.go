@@ -2,7 +2,6 @@ package deletecmd
 
 import (
 	"fmt"
-	"os/user"
 	"strings"
 	"time"
 
@@ -21,13 +20,11 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/gits"
 
-	gojenkins "github.com/jenkins-x/golang-jenkins"
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	jenkinsv1 "github.com/jenkins-x/jx/pkg/client/clientset/versioned/typed/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/cmd/templates"
 	"github.com/jenkins-x/jx/pkg/helm"
-	"github.com/jenkins-x/jx/pkg/jenkins"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/spf13/cobra"
@@ -117,23 +114,13 @@ func (o *DeleteApplicationOptions) Run() error {
 		return errors.Wrap(err, "setting up context")
 	}
 
-	isProw, err := o.IsProw()
-	if err != nil {
-		return errors.Wrap(err, "getting prow config")
-	}
-
 	jxClient, ns, err := o.JXClientAndDevNamespace()
 	if err != nil {
 		return err
 	}
 
-	var deletedApplications []string
-	if isProw {
-		sourceRepositoryInterface := jxClient.JenkinsV1().SourceRepositories(ns)
-		deletedApplications, err = o.deleteProwApplication(sourceRepositoryInterface)
-	} else {
-		deletedApplications, err = o.deleteJenkinsApplication()
-	}
+	sourceRepositoryInterface := jxClient.JenkinsV1().SourceRepositories(ns)
+	deletedApplications, err := o.deleteProwApplication(sourceRepositoryInterface)
 
 	if err != nil {
 		return errors.Wrapf(err, "deleting application")
@@ -192,7 +179,7 @@ func (o *DeleteApplicationOptions) deleteProwApplication(repoService jenkinsv1.S
 
 	names := removeEnvironments(jobs, envMap)
 	if len(names) == 0 {
-		return deletedApplications, fmt.Errorf("There are no Applications in Jenkins")
+		return deletedApplications, fmt.Errorf("there are no Applications in Jenkins X")
 	}
 
 	srList, err := repoService.List(metav1.ListOptions{})
@@ -291,104 +278,6 @@ func (o *DeleteApplicationOptions) deleteProwApplication(repoService jenkinsv1.S
 		}
 	}
 	return
-}
-
-func (o *DeleteApplicationOptions) deleteJenkinsApplication() (deletedApplications []string, err error) {
-	args := o.Args
-
-	jenk, err := o.JenkinsClient()
-	if err != nil {
-		return deletedApplications, err
-	}
-
-	jobs, err := jenkins.LoadAllJenkinsJobs(jenk)
-	if err != nil {
-		return deletedApplications, err
-	}
-
-	names := []string{}
-	m := map[string]*gojenkins.Job{}
-
-	for _, j := range jobs {
-		if jenkins.IsMultiBranchProject(j) {
-			name := j.Name
-			names = append(names, name)
-			m[name] = j
-		}
-	}
-
-	if len(names) == 0 {
-		return deletedApplications, fmt.Errorf("There are no Applications in Jenkins")
-	}
-
-	if len(args) == 0 {
-		args, err = util.SelectNamesWithFilter(names, "Pick Applications to remove from Jenkins:", o.SelectAll, o.SelectFilter, "", o.GetIOFileHandles())
-		if err != nil {
-			return deletedApplications, err
-		}
-		if len(args) == 0 {
-			return deletedApplications, fmt.Errorf("No application was picked to be removed from Jenkins")
-		}
-	} else {
-		for _, arg := range args {
-			if util.StringArrayIndex(names, arg) < 0 {
-				return deletedApplications, util.InvalidArg(arg, names)
-			}
-		}
-	}
-	deleteMessage := strings.Join(args, ", ")
-
-	if !o.BatchMode {
-		if answer, err := util.Confirm("You are about to delete these Applications from Jenkins: "+deleteMessage, false, "The list of Applications names to be deleted from Jenkins", o.GetIOFileHandles()); !answer {
-			return deletedApplications, err
-		}
-	}
-	for _, name := range args {
-		job := m[name]
-		if job != nil {
-			err = o.deleteApplication(jenk, name, job)
-			if err != nil {
-				return deletedApplications, err
-			}
-			deletedApplications = append(deletedApplications, name)
-		}
-	}
-	return deletedApplications, err
-}
-
-func (o *DeleteApplicationOptions) deleteApplication(jenkinsClient gojenkins.JenkinsClient, name string, job *gojenkins.Job) error {
-	jxClient, ns, err := o.JXClientAndDevNamespace()
-	if err != nil {
-		return err
-	}
-	envMap, envNames, err := kube.GetOrderedEnvironments(jxClient, ns)
-	if err != nil {
-		return err
-	}
-	u, err := user.Current()
-	if err != nil {
-		return err
-	}
-
-	applicationName := o.applicationNameFromJenkinsJobName(name)
-	for _, envName := range envNames {
-		// TODO filter on environment names?
-		env := envMap[envName]
-		if env != nil && env.Spec.Kind == v1.EnvironmentKindTypePermanent {
-			err = o.deleteApplicationFromEnvironment(env, applicationName, u.Username)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// lets try delete the job from each environment first
-	return jenkinsClient.DeleteJob(*job)
-}
-
-func (o *DeleteApplicationOptions) applicationNameFromJenkinsJobName(name string) string {
-	path := strings.Split(name, "/")
-	return path[len(path)-1]
 }
 
 func (o *DeleteApplicationOptions) deleteApplicationFromEnvironment(env *v1.Environment, applicationName string, username string) error {
