@@ -410,13 +410,6 @@ func (options *ImportOptions) Run() error {
 		return nil
 	}
 
-	if !isProw {
-		err = options.checkChartmuseumCredentialExists()
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err = kube.GetOrCreateSourceRepository(jxClient, ns, options.AppName, options.Organisation, gits.SourceRepositoryProviderURL(options.GitProvider))
 	if err != nil {
 		return errors.Wrapf(err, "creating application resource for %s", util.ColorInfo(options.AppName))

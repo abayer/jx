@@ -9,7 +9,6 @@ import (
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/gits"
-	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/log"
@@ -95,16 +94,6 @@ func (o *StepPostInstallOptions) Run() (err error) {
 		return errors.Wrapf(err, "cannot load Environments in namespace %s", ns)
 	}
 
-	teamSettings, err := o.TeamSettings()
-	if err != nil {
-		return errors.Wrapf(err, "cannot load the TeamSettings from dev namespace %s", ns)
-	}
-	branchPattern := teamSettings.BranchPatterns
-
-	envDir, err := util.EnvironmentsDir()
-	if err != nil {
-		return errors.Wrapf(err, "cannot find the environments git clone local directory")
-	}
 	authConfigSvc, err := o.GitAuthConfigService()
 	if err != nil {
 		return errors.Wrapf(err, "cannot create the git auth config service")

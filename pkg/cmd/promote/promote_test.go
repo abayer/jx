@@ -38,7 +38,6 @@ import (
 )
 
 func TestPromoteToProductionRun(t *testing.T) {
-
 	// prepare the initial setup for testing
 	testEnv, err := prepareInitialPromotionEnv(t, true)
 	assert.NoError(t, err)

@@ -1,6 +1,7 @@
 package create
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jenkins-x/jx/pkg/cmd/create/options"
@@ -8,12 +9,9 @@ import (
 	"github.com/jenkins-x/jx/pkg/cmd/helper"
 
 	"github.com/jenkins-x/jx/pkg/auth"
-	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/kube/serviceaccount"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	"fmt"
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
 	"github.com/jenkins-x/jx/pkg/cmd/opts"
@@ -255,11 +253,6 @@ func (o *CreateEnvOptions) RegisterEnvironment(env *v1.Environment, gitProvider 
 
 	if gitURL == "" {
 		return nil
-	}
-
-	envDir, err := util.EnvironmentsDir()
-	if err != nil {
-		return errors.Wrap(err, "getting environments directory")
 	}
 
 	if gitProvider == nil {
