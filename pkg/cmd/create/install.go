@@ -536,11 +536,6 @@ func (options *InstallOptions) Run() error {
 		return errors.Wrap(err, "getting install configuration")
 	}
 
-	err = options.selectJenkinsInstallation()
-	if err != nil {
-		return errors.Wrap(err, "selecting the Jenkins installation type")
-	}
-
 	// Check the provided flags before starting any installation
 	err = options.CheckFlags()
 	if err != nil {
@@ -743,15 +738,6 @@ func (options *InstallOptions) Run() error {
 	err = options.installAddons()
 	if err != nil {
 		return errors.Wrap(err, "installing the Jenkins X Addons")
-	}
-
-	// Jenkins needs to be configured already here if running in non GitOps mode
-	// in order to be able to create the environments
-	if !options.Flags.GitOpsMode {
-		err = options.configureJenkins(ns)
-		if err != nil {
-			return errors.Wrap(err, "configuring Jenkins")
-		}
 	}
 
 	err = options.createEnvironments(ns)
@@ -1163,59 +1149,19 @@ func (options *InstallOptions) configureHelmRepo() error {
 	return nil
 }
 
-func (options *InstallOptions) selectJenkinsInstallation() error {
-	if !options.BatchMode {
-		//determine which install type is configured
-		jenkinsInstallOption := ServerlessJenkins
-		log.Logger().Infof(util.QuestionAnswer("Configured Jenkins installation type", jenkinsInstallOption))
-	}
-	return nil
-}
-
-func (options *InstallOptions) configureTillerNamespace() error {
-	helmConfig := &options.CreateEnvOptions.HelmValuesConfig
-	initOpts := &options.InitOptions
-	if initOpts.Flags.TillerNamespace != "" {
-		if helmConfig.Jenkins.Servers.Global.EnvVars == nil {
-			helmConfig.Jenkins.Servers.Global.EnvVars = map[string]string{}
-		}
-		helmConfig.Jenkins.Servers.Global.EnvVars["TILLER_NAMESPACE"] = initOpts.Flags.TillerNamespace
-		os.Setenv("TILLER_NAMESPACE", initOpts.Flags.TillerNamespace)
-	}
-	return nil
-}
-
 func (options *InstallOptions) configureHelmValues(namespace string) error {
 	helmConfig := &options.CreateEnvOptions.HelmValuesConfig
-
-	domain := helmConfig.ExposeController.Config.Domain
-	if domain != "" && addon.IsAddonEnabled("gitea") {
-		helmConfig.Jenkins.Servers.GetOrCreateFirstGitea().Url = "http://gitea-gitea." + namespace + "." + domain
-	}
-
-	err := options.addGitServersToJenkinsConfig(helmConfig)
-	if err != nil {
-		return errors.Wrap(err, "configuring the Git Servers into Jenkins configuration")
-	}
-
-	err = options.configureTillerNamespace()
-	if err != nil {
-		return errors.Wrap(err, "configuring the tiller namespace")
-	}
 
 	if !options.Flags.GitOpsMode {
 		options.SetDevNamespace(namespace)
 	}
 
-	isProw := options.Flags.Prow
-	if isProw {
-		enableJenkins := false
-		helmConfig.Jenkins.Enabled = &enableJenkins
-		helmConfig.ControllerBuild = &config.EnabledConfig{true}
-		helmConfig.ControllerWorkflow = &config.EnabledConfig{false}
-		if options.Flags.Tekton && options.Flags.Provider == cloud.GKE {
-			helmConfig.DockerRegistryEnabled = &config.EnabledConfig{false}
-		}
+	enableJenkins := false
+	helmConfig.Jenkins.Enabled = &enableJenkins
+	helmConfig.ControllerBuild = &config.EnabledConfig{true}
+	helmConfig.ControllerWorkflow = &config.EnabledConfig{false}
+	if options.Flags.Tekton && options.Flags.Provider == cloud.GKE {
+		helmConfig.DockerRegistryEnabled = &config.EnabledConfig{false}
 	}
 	return nil
 }
@@ -1589,11 +1535,7 @@ func (options *InstallOptions) configureImportModeInTeamSettings() error {
 	callback := func(env *v1.Environment) error {
 		settings := &env.Spec.TeamSettings
 		if string(settings.ImportMode) == "" {
-			if options.Flags.Tekton {
-				settings.ImportMode = v1.ImportModeTypeYAML
-			} else {
-				settings.ImportMode = v1.ImportModeTypeJenkinsfile
-			}
+			settings.ImportMode = v1.ImportModeTypeYAML
 		}
 		log.Logger().Infof("Configuring the TeamSettings for ImportMode %s", string(settings.ImportMode))
 		return nil
@@ -1804,23 +1746,16 @@ func (options *InstallOptions) applyGitOpsDevEnvironmentConfig(gitOpsEnvDir stri
 
 func (options *InstallOptions) setupGitOpsPostApply(ns string) error {
 	if options.Flags.GitOpsMode && !options.Flags.NoGitOpsEnvSetup {
-		if !options.Flags.Prow {
-			err := options.configureJenkins(ns)
-			if err != nil {
-				return errors.Wrap(err, "configuring Jenkins")
-			}
-		} else {
-			client, devNamespace, err := options.KubeClientAndDevNamespace()
+		client, devNamespace, err := options.KubeClientAndDevNamespace()
 
-			settings, err := options.TeamSettings()
-			if err != nil {
-				return errors.Wrap(err, "reading the team settings")
-			}
+		settings, err := options.TeamSettings()
+		if err != nil {
+			return errors.Wrap(err, "reading the team settings")
+		}
 
-			prow.AddDummyApplication(client, devNamespace, settings)
-			if err != nil {
-				return errors.Wrap(err, "adding dummy application")
-			}
+		prow.AddDummyApplication(client, devNamespace, settings)
+		if err != nil {
+			return errors.Wrap(err, "adding dummy application")
 		}
 
 		jxClient, devNs, err := options.JXClientAndDevNamespace()
@@ -1846,7 +1781,6 @@ func (options *InstallOptions) setupGitOpsPostApply(ns string) error {
 				CommonOptions: options.CommonOptions,
 			},
 			Prefix: options.Flags.DefaultEnvironmentPrefix,
-			Prow:   options.Flags.Prow,
 		}
 		if options.BatchMode {
 			createEnvOpts.BatchMode = options.BatchMode
@@ -2442,7 +2376,6 @@ func (options *InstallOptions) storeAdminCredentialsInVault(svc *config.AdminSec
 		return errors.Wrapf(err, "retrieving the system vault client in namespace %s", devNamespace)
 	}
 	secrets := map[vault.AdminSecret]config.BasicAuth{
-		vault.JenkinsAdminSecret:     svc.JenkinsAuth(),
 		vault.IngressAdminSecret:     svc.IngressAuth(),
 		vault.ChartmuseumAdminSecret: svc.ChartMuseumAuth(),
 		vault.GrafanaAdminSecret:     svc.GrafanaAuth(),
@@ -2656,55 +2589,6 @@ func (options *InstallOptions) saveClusterConfig() error {
 	return nil
 }
 
-func (options *InstallOptions) configureJenkins(namespace string) error {
-	if !options.Flags.Prow {
-		log.Logger().Info("Configure Jenkins API Token")
-		if isOpenShiftProvider(options.Flags.Provider) {
-			options.CreateJenkinsUserOptions.CommonOptions = options.CommonOptions
-			options.CreateJenkinsUserOptions.Password = options.AdminSecretsService.Flags.DefaultAdminPassword
-			options.CreateJenkinsUserOptions.Username = "jenkins-admin"
-			options.CreateJenkinsUserOptions.Verbose = false
-			jenkinsSaToken, err := options.GetCommandOutput("", "oc", "serviceaccounts", "get-token", "jenkins", "-n", namespace)
-			if err != nil {
-				return errors.Wrap(err, "getting token from service account jenkins")
-			}
-			options.CreateJenkinsUserOptions.BearerToken = jenkinsSaToken
-			err = options.CreateJenkinsUserOptions.Run()
-			if err != nil {
-				return errors.Wrap(err, "creating Jenkins API token")
-			}
-		} else {
-			err := options.Retry(3, 2*time.Second, func() (err error) {
-				_, devNamespace, err := options.KubeClientAndDevNamespace()
-				if err != nil {
-					return errors.Wrap(err, "getting team's dev namespace")
-				}
-				options.CreateJenkinsUserOptions.CommonOptions = options.CommonOptions
-				options.CreateJenkinsUserOptions.Namespace = devNamespace
-				options.CreateJenkinsUserOptions.RecreateToken = true
-				options.CreateJenkinsUserOptions.Username = options.AdminSecretsService.Flags.DefaultAdminUsername
-				options.CreateJenkinsUserOptions.Password = options.AdminSecretsService.Flags.DefaultAdminPassword
-				options.CreateJenkinsUserOptions.Verbose = false
-				options.CreateJenkinsUserOptions.RecreateToken = true
-				if options.BatchMode {
-					options.CreateJenkinsUserOptions.BatchMode = true
-				}
-				err = options.CreateJenkinsUserOptions.Run()
-				return
-			})
-			if err != nil {
-				return errors.Wrap(err, "creating Jenkins API token")
-			}
-		}
-
-		err := options.UpdateJenkinsURL([]string{namespace})
-		if err != nil {
-			log.Logger().Warnf("Failed to update the Jenkins external URL: %s", err)
-		}
-	}
-	return nil
-}
-
 func (options *InstallOptions) installAddons() error {
 	if !options.Flags.GitOpsMode {
 		addonConfig, err := addon.LoadAddonsConfig()
@@ -2748,7 +2632,6 @@ func (options *InstallOptions) createEnvironments(namespace string) error {
 		options.CreateEnvOptions.Update = true
 
 		options.CreateEnvOptions.Prefix = options.Flags.DefaultEnvironmentPrefix
-		options.CreateEnvOptions.Prow = options.Flags.Prow
 		if options.BatchMode {
 			options.CreateEnvOptions.BatchMode = options.BatchMode
 		}
@@ -3153,27 +3036,6 @@ func (options *InstallOptions) installAddon(name string) error {
 		return giteaOptions.Run()
 	}
 	return opts.CreateAddon(name)
-}
-
-func (options *InstallOptions) addGitServersToJenkinsConfig(helmConfig *config.HelmValuesConfig) error {
-	gitAuthCfg, err := options.GitAuthConfigService()
-	if err != nil {
-		return errors.Wrap(err, "failed to create the git auth config service")
-	}
-	cfg := gitAuthCfg.Config()
-	for _, server := range cfg.Servers {
-		if server.Kind == "github" {
-			u := server.URL
-			if !gits.IsGitHubServerURL(u) {
-				sc := config.JenkinsGithubServersValuesConfig{
-					Name: server.Name,
-					Url:  gits.GitHubEnterpriseApiEndpointURL(u),
-				}
-				helmConfig.Jenkins.Servers.GHE = append(helmConfig.Jenkins.Servers.GHE, sc)
-			}
-		}
-	}
-	return nil
 }
 
 func (options *InstallOptions) ensureDefaultStorageClass(client kubernetes.Interface, name string, provisioner string, typeName string) error {
