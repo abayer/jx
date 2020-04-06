@@ -42,7 +42,7 @@ var (
 		This pipeline step ensures that all the necessary jobs are imported and the webhooks set up - e.g. for the current Environments.
 
 		It is designed to work with GitOps based development environments where the permanent Environments like Staging and Production are defined in a git repository.
-		This step is used to ensure that all the 'Environment' resources have their associated CI+CD jobs setup in Jenkins or Prow with the necessary webhooks in place.
+		This step is used to ensure that all the 'Environment' resources have their associated CI+CD jobs setup in Prow with the necessary webhooks in place.
 `)
 
 	stepPostInstallExample = templates.Examples(`
@@ -110,11 +110,6 @@ func (o *StepPostInstallOptions) Run() (err error) {
 		return errors.Wrapf(err, "cannot create the git auth config service")
 	}
 
-	prow, err := o.IsProw()
-	if err != nil {
-		return errors.Wrapf(err, "cannot determine if the current team is using Prow")
-	}
-
 	errs := []error{}
 	for _, name := range names {
 		env := envMap[name]
@@ -144,38 +139,30 @@ func (o *StepPostInstallOptions) Run() (err error) {
 		}
 		o.Results.GitProviders[name] = gitProvider
 
-		if prow {
-			config := authConfigSvc.Config()
-			u := gitInfo.HostURL()
-			server := config.GetOrCreateServer(u)
-			if len(server.Users) == 0 {
-				// lets check if the host was used in `~/.jx/gitAuth.yaml` instead of URL
-				s2 := config.GetOrCreateServer(gitInfo.Host)
-				if s2 != nil && len(s2.Users) > 0 {
-					server = s2
-					u = gitInfo.Host
-				}
+		config := authConfigSvc.Config()
+		u := gitInfo.HostURL()
+		server := config.GetOrCreateServer(u)
+		if len(server.Users) == 0 {
+			// lets check if the host was used in `~/.jx/gitAuth.yaml` instead of URL
+			s2 := config.GetOrCreateServer(gitInfo.Host)
+			if s2 != nil && len(s2.Users) > 0 {
+				server = s2
+				u = gitInfo.Host
 			}
-			user, err := o.PickPipelineUserAuth(config, server)
-			if err != nil {
-				return err
-			}
-			if user.Username == "" {
-				return fmt.Errorf("could not find a username for git server %s", u)
-			}
-			err = authConfigSvc.SaveConfig()
-			if err != nil {
-				return err
-			}
-			// register the webhook
-			return o.CreateWebhookProw(gitURL, gitProvider)
 		}
-
-		err = o.ImportProject(gitURL, envDir, jenkinsfile.Name, branchPattern, o.EnvJobCredentials, false, gitProvider, authConfigSvc, true, o.BatchMode)
+		user, err := o.PickPipelineUserAuth(config, server)
 		if err != nil {
-			log.Logger().Errorf("failed to import Environment %s with git URL %s due to: %s", name, gitURL, err)
-			errs = append(errs, errors.Wrapf(err, "failed to import Environment %s with git URL %s", name, gitURL))
+			return err
 		}
+		if user.Username == "" {
+			return fmt.Errorf("could not find a username for git server %s", u)
+		}
+		err = authConfigSvc.SaveConfig()
+		if err != nil {
+			return err
+		}
+		// register the webhook
+		return o.CreateWebhookProw(gitURL, gitProvider)
 	}
 	return util.CombineErrors(errs...)
 }

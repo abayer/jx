@@ -955,7 +955,7 @@ func (o *PromoteOptions) CreatePromoteKey(env *v1.Environment) *kube.PromoteStep
 	if pipeline != "" && build == "" {
 		log.Logger().Warnf("No $BUILD_NUMBER environment variable found so cannot record promotion activities into the PipelineActivity resources in kubernetes")
 		var err error
-		build, err = o.GetLatestPipelineBuildByCRD(pipeline)
+		build, err = o.GetLatestBuildForPipelineFromActivity(pipeline)
 		if err != nil {
 			log.Logger().Warnf("Could not discover the latest PipelineActivity build %s", err)
 		}

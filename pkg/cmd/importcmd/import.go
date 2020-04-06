@@ -211,7 +211,6 @@ func (options *ImportOptions) Run() error {
 	options.SetBatchMode(options.BatchMode)
 
 	var err error
-	isProw := false
 	jxClient, ns, err := options.JXClientAndDevNamespace()
 	if err != nil {
 		return err
@@ -220,18 +219,6 @@ func (options *ImportOptions) Run() error {
 		_, err = options.KubeClient()
 		if err != nil {
 			return err
-		}
-
-		isProw, err = options.IsProw()
-		if err != nil {
-			return err
-		}
-
-		if !isProw {
-			options.Jenkins, err = options.JenkinsClient()
-			if err != nil {
-				return err
-			}
 		}
 	}
 	err = options.DefaultsFromTeamSettings()

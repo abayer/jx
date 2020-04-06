@@ -1,16 +1,10 @@
 package update
 
 import (
-	"fmt"
-	"io/ioutil"
 	"strings"
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
-	"github.com/jenkins-x/jx/pkg/auth"
 	"github.com/jenkins-x/jx/pkg/cmd/helper"
-	"github.com/jenkins-x/jx/pkg/jenkinsfile"
-	"github.com/jenkins-x/jx/pkg/kube"
-
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
@@ -104,22 +98,15 @@ func (o *UpdateWebhooksOptions) Run() error {
 		}
 	}
 
-	isProwEnabled, err := o.IsProw()
-	if err != nil {
-		return err
-	}
-
 	hmacToken := ""
-	if isProwEnabled {
-		if o.HMAC != "" {
-			hmacToken = o.HMAC
-		} else {
-			hmacTokenSecret, err := client.CoreV1().Secrets(ns).Get("hmac-token", metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			hmacToken = string(hmacTokenSecret.Data["hmac"])
+	if o.HMAC != "" {
+		hmacToken = o.HMAC
+	} else {
+		hmacTokenSecret, err := client.CoreV1().Secrets(ns).Get("hmac-token", metav1.GetOptions{})
+		if err != nil {
+			return err
 		}
+		hmacToken = string(hmacTokenSecret.Data["hmac"])
 	}
 
 	jxClient, ns, err := o.JXClientAndDevNamespace()
@@ -132,11 +119,9 @@ func (o *UpdateWebhooksOptions) Run() error {
 		return errors.Wrapf(err, "failed to find any SourceRepositories in namespace %s", ns)
 	}
 
-	envMap, _, err := kube.GetEnvironments(jxClient, ns)
-
 	for _, sr := range srList.Items {
 		if o.matchesRepository(&sr) {
-			err = o.ensureWebHookCreated(&sr, webhookURL, isProwEnabled, hmacToken)
+			err = o.ensureWebHookCreated(&sr, webhookURL, hmacToken)
 			if err != nil {
 				if o.WarnOnFail {
 					log.Logger().Warnf(err.Error())
@@ -144,23 +129,12 @@ func (o *UpdateWebhooksOptions) Run() error {
 					return err
 				}
 			}
-			if !isProwEnabled {
-				isEnv := kube.IsEnvironmentRepository(envMap, &sr)
-				err = o.ensureJenkinsJobExists(&sr, isEnv)
-				if err != nil {
-					if o.WarnOnFail {
-						log.Logger().Warnf(err.Error())
-					} else {
-						return err
-					}
-				}
-			}
 		}
 	}
 	return nil
 }
 
-func (o *UpdateWebhooksOptions) ensureWebHookCreated(repository *v1.SourceRepository, webhookURL string, isProwEnabled bool, hmacToken string) error {
+func (o *UpdateWebhooksOptions) ensureWebHookCreated(repository *v1.SourceRepository, webhookURL string, hmacToken string) error {
 	spec := repository.Spec
 	gitServerURL := spec.Provider
 	owner := spec.Org
@@ -184,50 +158,11 @@ func (o *UpdateWebhooksOptions) ensureWebHookCreated(repository *v1.SourceReposi
 		log.Logger().Infof("Updating webhooks for Owner: %s and Repository: %s in git server: %s", info(owner), info(repo), info(gitServerURL))
 	}
 
-	err = o.updateRepoHook(provider, owner, repo, webhookURL, isProwEnabled, hmacToken)
+	err = o.updateRepoHook(provider, owner, repo, webhookURL, hmacToken)
 	if err != nil {
 		return errors.Wrapf(err, "failed to update webhooks for Owner: %s and Repository: %s in git server: %s", owner, repo, gitServerURL)
 	}
 	return nil
-}
-
-func (o *UpdateWebhooksOptions) ensureJenkinsJobExists(repository *v1.SourceRepository, isEnvironment bool) error {
-	authConfigSvc := auth.NewMemoryAuthConfigService()
-	gitURL, err := kube.GetRepositoryGitURL(repository)
-	if err != nil {
-		return errors.Wrapf(err, "failed to find GitURL for repository %s", repository.Name)
-	}
-	if gitURL == "" {
-		return fmt.Errorf("no GitURL for repository %s", repository.Name)
-	}
-
-	envDir, err := ioutil.TempDir("", "jx-boot-jenkins-repo-")
-	if err != nil {
-		return errors.Wrapf(err, "failed to create a temporary directory for repository %s", repository.Name)
-	}
-
-	err = o.Git().Clone(gitURL, envDir)
-	if err != nil {
-		return errors.Wrapf(err, "failed to clone %s to %s for repository %s", gitURL, envDir, repository.Name)
-	}
-
-	spec := repository.Spec
-	gitServerURL := spec.Provider
-	gitKind, err := o.GitServerHostURLKind(gitServerURL)
-	if err != nil {
-		return errors.Wrapf(err, "failed to find Git Server kind for host %s", gitServerURL)
-	}
-	ghOwner, err := o.GetGitHubAppOwnerForRepository(repository)
-	if err != nil {
-		return err
-	}
-	gitProvider, err := o.GitProviderForGitServerURL(gitServerURL, gitKind, ghOwner)
-	if err != nil {
-		return errors.Wrapf(err, "failed to find Git provider for host %s and kind %s", gitServerURL, gitKind)
-	}
-
-	log.Logger().Infof("ensuring we have a Jenkins job for git URL %s isEnvironment: %v", gitURL, isEnvironment)
-	return o.ImportProject(gitURL, envDir, jenkinsfile.Name, "", "", false, gitProvider, authConfigSvc, isEnvironment, true)
 }
 
 // GetOrgOrUserFromOptions returns the Org if set,
@@ -241,7 +176,7 @@ func (o *UpdateWebhooksOptions) GetOrgOrUserFromOptions() string {
 	return owner
 }
 
-func (o *UpdateWebhooksOptions) updateRepoHook(git gits.GitProvider, owner string, repoName string, webhookURL string, isProwEnabled bool, hmacToken string) error {
+func (o *UpdateWebhooksOptions) updateRepoHook(git gits.GitProvider, owner string, repoName string, webhookURL string, hmacToken string) error {
 	userName := git.UserAuth().Username
 	log.Logger().Infof("Checking hooks for repository %s/%s with user %s", util.ColorInfo(owner), util.ColorInfo(repoName), util.ColorInfo(userName))
 
@@ -264,9 +199,7 @@ func (o *UpdateWebhooksOptions) updateRepoHook(git gits.GitProvider, owner strin
 	if userName != owner {
 		webHookArgs.Repo.Organisation = owner
 	}
-	if isProwEnabled {
-		webHookArgs.Secret = hmacToken
-	}
+	webHookArgs.Secret = hmacToken
 	if len(webhooks) > 0 {
 		// find matching hook
 		for _, webHook := range webhooks {

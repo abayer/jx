@@ -61,7 +61,6 @@ type CreateEnvOptions struct {
 	PromotionStrategy      string
 	NoGitOps               bool
 	NoDevNamespaceInit     bool
-	Prow                   bool
 	GitOpsMode             bool
 	ForkEnvironmentGitRepo string
 	EnvJobCredentials      string
@@ -118,7 +117,6 @@ func NewCmdCreateEnv(commonOpts *opts.CommonOptions) *cobra.Command {
 	cmd.Flags().StringVarP(&options.BranchPattern, "branches", "", "", "The branch pattern for branches to trigger CI/CD pipelines on the environment Git repository")
 
 	cmd.Flags().BoolVarP(&options.NoGitOps, "no-gitops", "x", false, "Disables the use of GitOps on the environment so that promotion is implemented by directly modifying the resources via helm instead of using a Git repository")
-	cmd.Flags().BoolVarP(&options.Prow, "prow", "", false, "Install and use Prow for environment promotion")
 	cmd.Flags().BoolVarP(&options.Vault, "vault", "", false, "Sets up a Hashicorp Vault for storing secrets during the cluster creation")
 	cmd.Flags().StringVarP(&options.PullSecrets, optionPullSecrets, "", "", "A list of Kubernetes secret names that will be attached to the service account (e.g. foo, bar, baz)")
 
@@ -152,7 +150,6 @@ func (o *CreateEnvOptions) Run() error {
 		return err
 	}
 
-	prowFlag := o.Prow
 	var devEnv *v1.Environment
 	if o.GitOpsMode {
 		err = o.ModifyDevEnvironment(func(env *v1.Environment) error {
@@ -163,21 +160,6 @@ func (o *CreateEnvOptions) Run() error {
 			return err
 		}
 	} else {
-		devEnv, err = kube.EnsureDevEnvironmentSetup(jxClient, ns)
-		if err != nil {
-			return err
-		}
-
-		prowFlag, err = o.IsProw()
-		if err != nil {
-			return err
-		}
-		if prowFlag && !o.Prow {
-			o.Prow = true
-		}
-	}
-
-	if o.Prow {
 		// lets make sure we have the prow enabled
 		err = o.ModifyDevEnvironment(func(env *v1.Environment) error {
 			env.Spec.TeamSettings.PromotionEngine = v1.PromotionEngineProw
@@ -302,61 +284,57 @@ func (o *CreateEnvOptions) RegisterEnvironment(env *v1.Environment, gitProvider 
 		gitProvider = p
 	}
 
-	if o.Prow {
-		repo := fmt.Sprintf("%s/%s", gitInfo.Organisation, gitInfo.Name)
+	repo := fmt.Sprintf("%s/%s", gitInfo.Organisation, gitInfo.Name)
 
-		kubeClient, devNs, err := o.KubeClientAndDevNamespace()
-		if err != nil {
-			return err
-		}
-
-		devEnv, teamSettings, err := o.DevEnvAndTeamSettings()
-		if err != nil {
-			return err
-		}
-		if teamSettings.IsSchedulerMode() {
-			jxClient, _, err := o.JXClient()
-			if err != nil {
-				return err
-			}
-			sr, err := kube.GetOrCreateSourceRepository(jxClient, devNs, gitInfo.Name, gitInfo.Organisation, gitInfo.HostURLWithoutUser())
-			log.Logger().Debugf("have SourceRepository: %s\n", sr.Name)
-
-			err = o.GenerateProwConfig(devNs, devEnv)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = prow.AddEnvironment(kubeClient, []string{repo}, devNs, env.Spec.Namespace, teamSettings, env.Spec.RemoteCluster)
-			if err != nil {
-				return fmt.Errorf("failed to add repo %s to Prow config in namespace %s: %v", repo, env.Spec.Namespace, err)
-			}
-		}
-
-		config := authConfigSvc.Config()
-		u := gitInfo.HostURL()
-		server := config.GetOrCreateServer(u)
-		if len(server.Users) == 0 {
-			// lets check if the host was used in `~/.jx/gitAuth.yaml` instead of URL
-			s2 := config.GetOrCreateServer(gitInfo.Host)
-			if s2 != nil && len(s2.Users) > 0 {
-				server = s2
-				u = gitInfo.Host
-			}
-		}
-		user, err := o.PickPipelineUserAuth(config, server)
-		if err != nil {
-			return err
-		}
-		if user.Username == "" {
-			return fmt.Errorf("Could not find a username for git server %s", u)
-		}
-		err = authConfigSvc.SaveConfig()
-		if err != nil {
-			return err
-		}
-		return o.CreateWebhookProw(gitURL, gitProvider)
+	kubeClient, devNs, err := o.KubeClientAndDevNamespace()
+	if err != nil {
+		return err
 	}
 
-	return o.ImportProject(gitURL, envDir, jenkinsfile.Name, o.BranchPattern, o.EnvJobCredentials, false, gitProvider, authConfigSvc, true, o.BatchMode)
+	devEnv, teamSettings, err := o.DevEnvAndTeamSettings()
+	if err != nil {
+		return err
+	}
+	if teamSettings.IsSchedulerMode() {
+		jxClient, _, err := o.JXClient()
+		if err != nil {
+			return err
+		}
+		sr, err := kube.GetOrCreateSourceRepository(jxClient, devNs, gitInfo.Name, gitInfo.Organisation, gitInfo.HostURLWithoutUser())
+		log.Logger().Debugf("have SourceRepository: %s\n", sr.Name)
+
+		err = o.GenerateProwConfig(devNs, devEnv)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = prow.AddEnvironment(kubeClient, []string{repo}, devNs, env.Spec.Namespace, teamSettings, env.Spec.RemoteCluster)
+		if err != nil {
+			return fmt.Errorf("failed to add repo %s to Prow config in namespace %s: %v", repo, env.Spec.Namespace, err)
+		}
+	}
+
+	config := authConfigSvc.Config()
+	u := gitInfo.HostURL()
+	server := config.GetOrCreateServer(u)
+	if len(server.Users) == 0 {
+		// lets check if the host was used in `~/.jx/gitAuth.yaml` instead of URL
+		s2 := config.GetOrCreateServer(gitInfo.Host)
+		if s2 != nil && len(s2.Users) > 0 {
+			server = s2
+			u = gitInfo.Host
+		}
+	}
+	user, err := o.PickPipelineUserAuth(config, server)
+	if err != nil {
+		return err
+	}
+	if user.Username == "" {
+		return fmt.Errorf("Could not find a username for git server %s", u)
+	}
+	err = authConfigSvc.SaveConfig()
+	if err != nil {
+		return err
+	}
+	return o.CreateWebhookProw(gitURL, gitProvider)
 }
