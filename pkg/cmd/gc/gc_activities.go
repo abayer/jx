@@ -167,7 +167,7 @@ func (o *GCActivitiesOptions) Run() error {
 			}
 			continue
 		}
-		}
+	}
 
 	// Clean up completed PipelineRuns
 	err = o.gcPipelineRuns(currentNs)
