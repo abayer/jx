@@ -27,7 +27,6 @@ import (
 	"github.com/jenkins-x/jx/pkg/github"
 	"github.com/jenkins-x/jx/pkg/gits"
 	"github.com/jenkins-x/jx/pkg/jenkins"
-	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/kube"
 	"github.com/jenkins-x/jx/pkg/kube/naming"
 	"github.com/jenkins-x/jx/pkg/log"
@@ -50,29 +49,27 @@ type ImportOptions struct {
 
 	RepoURL string
 
-	Dir                     string
-	Organisation            string
-	Repository              string
-	Credentials             string
-	AppName                 string
-	GitHub                  bool
-	DryRun                  bool
-	SelectAll               bool
-	DisableDraft            bool
-	DisableJenkinsfileCheck bool
-	DisableWebhooks         bool
-	SelectFilter            string
-	Jenkinsfile             string
-	BranchPattern           string
-	GitRepositoryOptions    gits.GitRepositoryOptions
-	ImportGitCommitMessage  string
-	ListDraftPacks          bool
-	DraftPack               string
-	DockerRegistryOrg       string
-	GitDetails              gits.CreateRepoData
-	DeployKind              string
-	DeployOptions           v1.DeployOptions
-	SchedulerName           string
+	Dir                    string
+	Organisation           string
+	Repository             string
+	Credentials            string
+	AppName                string
+	GitHub                 bool
+	DryRun                 bool
+	SelectAll              bool
+	DisableDraft           bool
+	DisableWebhooks        bool
+	SelectFilter           string
+	BranchPattern          string
+	GitRepositoryOptions   gits.GitRepositoryOptions
+	ImportGitCommitMessage string
+	ListDraftPacks         bool
+	DraftPack              string
+	DockerRegistryOrg      string
+	GitDetails             gits.CreateRepoData
+	DeployKind             string
+	DeployOptions          v1.DeployOptions
+	SchedulerName          string
 
 	DisableDotGitSearch   bool
 	InitialisedGit        bool
@@ -171,18 +168,14 @@ func (options *ImportOptions) AddImportFlags(cmd *cobra.Command, createProject b
 	}
 	cmd.Flags().StringVarP(&options.Organisation, "org", "", "", "Specify the Git provider organisation to import the project into (if it is not already in one)")
 	cmd.Flags().StringVarP(&options.Repository, "name", "", notCreateProject("n"), "Specify the Git repository name to import the project into (if it is not already in one)")
-	cmd.Flags().StringVarP(&options.Credentials, "credentials", notCreateProject("c"), "", "The Jenkins credentials name used by the job")
-	cmd.Flags().StringVarP(&options.Jenkinsfile, "jenkinsfile", notCreateProject("j"), "", "The name of the Jenkinsfile to use. If not specified then 'Jenkinsfile' will be used")
 	cmd.Flags().BoolVarP(&options.DryRun, "dry-run", "", false, "Performs local changes to the repo but skips the import into Jenkins X")
 	cmd.Flags().BoolVarP(&options.DisableDraft, "no-draft", "", false, "Disable Draft from trying to default a Dockerfile and Helm Chart")
-	cmd.Flags().BoolVarP(&options.DisableJenkinsfileCheck, "no-jenkinsfile", "", false, "Disable defaulting a Jenkinsfile if its missing")
 	cmd.Flags().StringVarP(&options.ImportGitCommitMessage, "import-commit-message", "", "", "Specifies the initial commit message used when importing the project")
 	cmd.Flags().StringVarP(&options.BranchPattern, "branches", "", "", "The branch pattern for branches to trigger CI/CD pipelines on")
 	cmd.Flags().BoolVarP(&options.ListDraftPacks, "list-packs", "", false, "list available draft packs")
 	cmd.Flags().StringVarP(&options.DraftPack, "pack", "", "", "The name of the pack to use")
 	cmd.Flags().StringVarP(&options.SchedulerName, "scheduler", "", "", "The name of the Scheduler configuration to use for ChatOps when using Prow")
 	cmd.Flags().StringVarP(&options.DockerRegistryOrg, "docker-registry-org", "", "", "The name of the docker registry organisation to use. If not specified then the Git provider organisation will be used")
-	cmd.Flags().StringVarP(&options.ExternalJenkinsBaseURL, "external-jenkins-url", "", "", "The jenkins url that an external git provider needs to use")
 	cmd.Flags().BoolVarP(&options.DisableMaven, "disable-updatebot", "", false, "disable updatebot-maven-plugin from attempting to fix/update the maven pom.xml")
 	cmd.Flags().StringVarP(&options.ImportMode, "import-mode", "m", "", fmt.Sprintf("The import mode to use. Should be one of %s", strings.Join(v1.ImportModeStrings, ", ")))
 	cmd.Flags().BoolVarP(&options.UseDefaultGit, "use-default-git", "", false, "use default git account")
@@ -315,8 +308,7 @@ func (options *ImportOptions) Run() error {
 		}
 	}
 
-	checkForJenkinsfile := options.Jenkinsfile == "" && !options.DisableJenkinsfileCheck
-	shouldClone := checkForJenkinsfile || !options.DisableDraft
+	shouldClone := !options.DisableDraft
 
 	if options.RepoURL != "" {
 		if shouldClone {
@@ -447,15 +439,13 @@ func (options *ImportOptions) ImportProjectsFromGitHub() error {
 	log.Logger().Info("Selected repositories")
 	for _, r := range repos {
 		o2 := ImportOptions{
-			CommonOptions:           options.CommonOptions,
-			Dir:                     options.Dir,
-			RepoURL:                 r.CloneURL,
-			Organisation:            options.Organisation,
-			Repository:              r.Name,
-			Jenkins:                 options.Jenkins,
-			GitProvider:             options.GitProvider,
-			DisableJenkinsfileCheck: options.DisableJenkinsfileCheck,
-			DisableDraft:            options.DisableDraft,
+			CommonOptions: options.CommonOptions,
+			Dir:           options.Dir,
+			RepoURL:       r.CloneURL,
+			Organisation:  options.Organisation,
+			Repository:    r.Name,
+			GitProvider:   options.GitProvider,
+			DisableDraft:  options.DisableDraft,
 		}
 		log.Logger().Infof("Importing repository %s", util.ColorInfo(r.Name))
 		err = o2.Run()
@@ -486,25 +476,10 @@ func (options *ImportOptions) DraftCreate() error {
 	dir := options.Dir
 	var err error
 
-	defaultJenkinsfileName := jenkinsfile.Name
-	jenkinsfile := defaultJenkinsfileName
-	withRename := false
-	if options.Jenkinsfile != "" && options.Jenkinsfile != defaultJenkinsfileName {
-		jenkinsfile = options.Jenkinsfile
-		withRename = true
-	}
-	defaultJenkinsfile := filepath.Join(dir, defaultJenkinsfileName)
-	if !filepath.IsAbs(jenkinsfile) {
-		jenkinsfile = filepath.Join(dir, jenkinsfile)
-	}
 	args := &opts.InvokeDraftPack{
-		Dir:                     dir,
-		CustomDraftPack:         options.DraftPack,
-		Jenkinsfile:             jenkinsfile,
-		DefaultJenkinsfile:      defaultJenkinsfile,
-		WithRename:              withRename,
-		InitialisedGit:          options.InitialisedGit,
-		DisableJenkinsfileCheck: options.DisableJenkinsfileCheck,
+		Dir:             dir,
+		CustomDraftPack: options.DraftPack,
+		InitialisedGit:  options.InitialisedGit,
 	}
 	options.DraftPack, err = options.InvokeDraftPack(args)
 	if err != nil {
@@ -923,16 +898,6 @@ func (options *ImportOptions) doImport() error {
 		gitProvider = p
 	}
 
-	authConfigSvc, err := options.GitLocalAuthConfigService()
-	if err != nil {
-		return err
-	}
-	defaultJenkinsfileName := jenkinsfile.Name
-	jenkinsfile := options.Jenkinsfile
-	if jenkinsfile == "" {
-		jenkinsfile = defaultJenkinsfileName
-	}
-
 	dockerfileLocation := ""
 	if options.Dir != "" {
 		dockerfileLocation = filepath.Join(options.Dir, "Dockerfile")
@@ -951,28 +916,19 @@ func (options *ImportOptions) doImport() error {
 		}
 	}
 
-	isProw, err := options.IsProw()
-	if err != nil {
-		return err
-	}
-
 	githubAppMode, err := options.IsGitHubAppMode()
 	if err != nil {
 		return err
 	}
 
-	if isProw {
-		if !options.DisableWebhooks && !githubAppMode {
-			// register the webhook
-			err = options.CreateWebhookProw(gitURL, gitProvider)
-			if err != nil {
-				return err
-			}
+	if !options.DisableWebhooks && !githubAppMode {
+		// register the webhook
+		err = options.CreateWebhookProw(gitURL, gitProvider)
+		if err != nil {
+			return err
 		}
-		return options.addProwConfig(gitURL, gitProvider.Kind())
 	}
-
-	return options.ImportProject(gitURL, options.Dir, jenkinsfile, options.BranchPattern, options.Credentials, false, gitProvider, authConfigSvc, false, options.BatchMode)
+	return options.addProwConfig(gitURL, gitProvider.Kind())
 }
 
 func (options *ImportOptions) addProwConfig(gitURL string, gitKind string) error {

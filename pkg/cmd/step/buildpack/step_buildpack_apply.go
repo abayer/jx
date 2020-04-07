@@ -2,7 +2,6 @@ package buildpack
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/jenkins-x/jx/pkg/cmd/opts/step"
 
@@ -10,7 +9,6 @@ import (
 
 	"github.com/jenkins-x/jx/pkg/cmd/opts"
 	"github.com/jenkins-x/jx/pkg/cmd/templates"
-	"github.com/jenkins-x/jx/pkg/jenkinsfile"
 	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -34,10 +32,8 @@ var (
 type StepBuildPackApplyOptions struct {
 	step.StepOptions
 
-	Dir                     string
-	Jenkinsfile             string
-	DraftPack               string
-	DisableJenkinsfileCheck bool
+	Dir       string
+	DraftPack string
 }
 
 // NewCmdStepBuildPackApply Creates a new Command object
@@ -62,9 +58,7 @@ func NewCmdStepBuildPackApply(commonOpts *opts.CommonOptions) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.Dir, "dir", "d", "", "The directory to query to find the projects .git directory")
-	cmd.Flags().StringVarP(&options.Jenkinsfile, "jenkinsfile", "", "", "The name of the Jenkinsfile to use. If not specified then 'Jenkinsfile' will be used")
 	cmd.Flags().StringVarP(&options.DraftPack, "pack", "", "", "The name of the pack to use")
-	cmd.Flags().BoolVarP(&options.DisableJenkinsfileCheck, "no-jenkinsfile", "", false, "Disable defaulting a Jenkinsfile if its missing")
 	return cmd
 }
 
@@ -85,25 +79,10 @@ func (o *StepBuildPackApplyOptions) Run() error {
 	}
 	log.Logger().Infof("build pack is %s", settings.BuildPackURL)
 
-	defaultJenkinsfile := filepath.Join(dir, jenkinsfile.Name)
-	jenkinsfile := jenkinsfile.Name
-	withRename := false
-	if o.Jenkinsfile != "" {
-		jenkinsfile = o.Jenkinsfile
-		withRename = true
-	}
-	if !filepath.IsAbs(jenkinsfile) {
-		jenkinsfile = filepath.Join(dir, jenkinsfile)
-	}
-
 	args := &opts.InvokeDraftPack{
-		Dir:                     dir,
-		CustomDraftPack:         o.DraftPack,
-		Jenkinsfile:             jenkinsfile,
-		DefaultJenkinsfile:      defaultJenkinsfile,
-		WithRename:              withRename,
-		InitialisedGit:          true,
-		DisableJenkinsfileCheck: o.DisableJenkinsfileCheck,
+		Dir:             dir,
+		CustomDraftPack: o.DraftPack,
+		InitialisedGit:  true,
 	}
 	_, err = o.InvokeDraftPack(args)
 	if err != nil {

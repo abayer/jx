@@ -1066,10 +1066,9 @@ func (o *CreateDevPodOptions) guessDevPodLabel(dir string, labels []string) (str
 			return answer, err
 		}
 		args := &opts.InvokeDraftPack{
-			Dir:                     root,
-			ProjectConfig:           projectConfig,
-			DisableAddFiles:         true,
-			DisableJenkinsfileCheck: true,
+			Dir:             root,
+			ProjectConfig:   projectConfig,
+			DisableAddFiles: true,
 		}
 		answer, err = o.InvokeDraftPack(args)
 		if err != nil {

@@ -186,15 +186,14 @@ func (o *BehaviorOptions) importSourceRepository(gitInfo *gits.GitRepository) er
 	log.Logger().Infof("importing project %s", util.ColorInfo(o.SourceGitURL))
 
 	io := &importcmd.ImportOptions{
-		CommonOptions:           o.CommonOptions,
-		RepoURL:                 o.SourceGitURL,
-		DisableDraft:            true,
-		DisableJenkinsfileCheck: true,
-		DisableMaven:            true,
-		DisableWebhooks:         true,
-		Organisation:            gitInfo.Organisation,
-		Repository:              gitInfo.Name,
-		AppName:                 gitInfo.Name,
+		CommonOptions:   o.CommonOptions,
+		RepoURL:         o.SourceGitURL,
+		DisableDraft:    true,
+		DisableMaven:    true,
+		DisableWebhooks: true,
+		Organisation:    gitInfo.Organisation,
+		Repository:      gitInfo.Name,
+		AppName:         gitInfo.Name,
 	}
 	err := io.Run()
 	if err != nil {
