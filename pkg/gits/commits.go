@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	v1 "github.com/jenkins-x/jx/pkg/apis/jenkins.io/v1"
+	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/util"
 )
 
@@ -90,6 +91,7 @@ func (c *CommitInfo) Group() *CommitGroup {
 	if c.group == nil {
 		c.group = ConventionalCommitTitles[strings.ToLower(c.Kind)]
 	}
+	log.Logger().Warnf("kind: %s, group: %+v", strings.ToLower(c.Kind), c.group)
 	return c.group
 }
 
@@ -109,7 +111,7 @@ type GroupAndCommitInfos struct {
 // GenerateMarkdown generates the markdown document for the commits
 func GenerateMarkdown(releaseSpec *v1.ReleaseSpec, gitInfo *GitRepository) (string, error) {
 	commitInfos := []*CommitInfo{}
-
+	log.Logger().Warnf("rs: %+v", releaseSpec)
 	groupAndCommits := map[int]*GroupAndCommitInfos{}
 
 	issues := releaseSpec.Issues
@@ -120,6 +122,7 @@ func GenerateMarkdown(releaseSpec *v1.ReleaseSpec, gitInfo *GitRepository) (stri
 	}
 
 	for _, cs := range releaseSpec.Commits {
+		log.Logger().Warnf("cs: %+v", cs)
 		message := cs.Message
 		if message != "" {
 			ci := ParseCommit(message)
