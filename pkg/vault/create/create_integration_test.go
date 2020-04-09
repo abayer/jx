@@ -21,7 +21,6 @@ import (
 	"github.com/jenkins-x/jx/pkg/cloud"
 	"github.com/jenkins-x/jx/pkg/cmd/clients"
 	"github.com/jenkins-x/jx/pkg/kube"
-	"github.com/jenkins-x/jx/pkg/log"
 	"github.com/jenkins-x/jx/pkg/versionstream"
 	"k8s.io/client-go/kubernetes"
 
@@ -58,8 +57,6 @@ func TestVaultCreation(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	By("Silencing logger")
-	log.SetOutput(ioutil.Discard)
 
 	By("Setting up a temporary JX_HOME")
 	originalJxHome, tempJxHome, err = testhelpers.CreateTestJxHomeDir()
