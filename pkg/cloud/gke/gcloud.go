@@ -803,7 +803,7 @@ func (g *GCloud) CreateServiceAccountKey(serviceAccount string, projectID string
 		fmt.Sprintf("%s@%s.iam.gserviceaccount.com", serviceAccount, projectID),
 		"--project",
 		projectID}
-
+	log.Logger().Warnf("CREATING SA KEY: %s", strings.Join(args, " "))
 	cmd := util.Command{
 		Name: "gcloud",
 		Args: args,

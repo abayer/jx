@@ -170,7 +170,7 @@ func (v *defaultVaultCreator) CreateOrUpdateVault(param VaultCreationParam) erro
 	if err != nil {
 		return errors.Wrap(err, "creating Vault authentication service account")
 	}
-	log.Logger().Debugf("Created service account '%s' for Vault authentication", util.ColorInfo(vaultAuthServiceAccount))
+	log.Logger().Warnf("Created service account '%s' for Vault authentication", util.ColorInfo(vaultAuthServiceAccount))
 
 	images, err := v.dockerImages(param.VersionResolver)
 	if err != nil {
